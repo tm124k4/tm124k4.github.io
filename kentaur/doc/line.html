@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang='ja'>
+    <head>
+        <meta charset="utf-8">
+        <title>line - Kentaur.js</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
+
+        <style>
+            *{
+                font-size:12pt;
+                line-height:1.5em;
+            }
+
+            pre{
+                background-color:#ddd!important;
+            }
+        </style>
+    </head>
+    <body>
+        <header>Kentaur.js - line</header>
+        <div class="row">
+            <div class="col-md-2">
+                <a href="line.html">line</a><br>
+                <a href="move.html">move</a><br>
+            </div>
+
+            <div class="col-md-9">
+                <h1 id="line">line</h1>
+                <hr>
+                <h3>概要</h3><br>
+                <p>E().line()は、spanによる直線を描くメソッドです。描画されたspanはE()で取得したエレメントの直下に追加されます。</p>
+                <pre><code>line(x1,y1,x2,y2,speed)</code></pre>
+                <table class="table table-striped">
+                <thead>
+                <tr class="header">
+                <th>引数</th>
+                <th>内容</th>
+                <th>型</th>
+                <th>必須</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr class="odd">
+                <td>x1</td>
+                <td>始点のx座標</td>
+                <td>Number</td>
+                <td>yes</td>
+                </tr>
+                <tr class="even">
+                <td>y1</td>
+                <td>始点のy座標</td>
+                <td>Number</td>
+                <td>yes</td>
+                </tr>
+                <tr class="odd">
+                <td>x2</td>
+                <td>終点のx座標</td>
+                <td>Number</td>
+                <td>yes</td>
+                </tr>
+                <tr class="even">
+                <td>y2</td>
+                <td>終点のy座標</td>
+                <td>Number</td>
+                <td>yes</td>
+                </tr>
+                <tr class="odd">
+                <td>speed</td>
+                <td>速度(ms)</td>
+                <td>Number</td>
+                <td>no</td>
+                </tr>
+                </tbody>
+                </table><br>
+                <h3>解説</h3><br>
+                <p>通常、Javascriptでブラウザ上で直線を描くには、canvasやSVGがよく使われます。</p>
+                <pre><code>
+    //canvasの場合
+    var cv=document.getElementById("canvas1"),
+    ctx=cv.getContext('2d');
+    ctx.moveTo(100,50);
+    ctx.lineTo(200,250);
+    ctx.closePath();
+    ctx.stroke();
+
+    //SVGの場合
+    var sv=document.getElementById("svg1"),
+    line=document.createElementNS("http://www.w3.org/2000/svg","line");
+    line.setAttribute('x1',100);
+    line.setAttribute('y1',50);
+    line.setAttribute('x2',200);
+    line.setAttribute('y2',250);
+    line.setAttribute('stroke','black');
+    sv.appendChild(line);
+                </code></pre>
+                <p>しかし、canvasでは一度描画した図形のみを後から変形することはできず、画面を再描画する事によって実現されます。SVGでは後からDOM操作も可能ですが、親となるsvgタグと合わせて少なくとも2つ以上のタグが必要となります。</p>
+                <p>Kentaur.jsではspanのstyle属性下に対して必要なCSSスタイルを適用するので、単一のspanタグによって描画することができます。すなわち、以下の通りに書くことができます。</p>
+                <pre><code>E(“div#kentaur1”).line(100,50,200,250);</code></pre>
+                <p>また、第5引数に整数値(ms)を入力することで、始点から伸縮するようなアニメーションを伴って生成させることもできます。<a href="../examples/example_line.html">（サンプルページ）</a></p>
+            </p>
+                <pre><code>E(“div#kentaur1”).line(0,0,1000,700,3000);</code></pre>
+                <p>もちろん、描画されたものはspanタグそのものであり、後からこのspanタグに対してDOM操作を行い、変形させたり色を変更する事も可能です。</p>
+                
+            </div>
+        </div>
+    <footer>Kentaur.js Docs<br>(C)2021 Takahiro Misaka</footer>
+    </body>
+</html>

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang='ja'>
+    <head>
+        <meta charset="utf-8">
+        <title>move - Kentaur.js</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
+
+        <style>
+            *{
+                font-size:12pt;
+                line-height:1.5em;
+            }
+
+            pre{
+                background-color:#ddd!important;
+            }
+        </style>
+    </head>
+    <body>
+        <header>Kentaur.js - move</header>
+        <div class="row">
+            <div class="col-md-2">
+                <a href="line.html">line</a><br>
+                <a href="move.html">move</a><br>
+            </div>
+
+
+            <div class="col-md-9">
+                <h1 id="move">move</h1>
+                <hr>
+                <h3>概要</h3><br>
+                <p>E().move()は、E()で取得したHTMLエレメントを任意の2D座標に移動させるメソッドです。</p>
+                <pre><code>move(x,y,speed)</pre></code>
+                <table class="table table-striped">
+                <thead>
+                <tr class="header">
+                <th>引数</th>
+                <th>内容</th>
+                <th>型</th>
+                <th>必須</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr class="odd">
+                <td>x</td>
+                <td>移動先のx座標</td>
+                <td>Number</td>
+                <td>yes</td>
+                </tr>
+                <tr class="even">
+                <td>y</td>
+                <td>移動先のy座標</td>
+                <td>Number</td>
+                <td>yes</td>
+                </tr>
+                <tr class="odd">
+                <td>speed</td>
+                <td>速度(ms)</td>
+                <td>Number</td>
+                <td>no</td>
+                </tr>
+                </tbody>
+                </table>
+                <h3>解説</h3>
+                <p>HTMLエレメントを移動させる場合、移動させたいエレメントのstyle属性でleftとtopを直接指定する事が一般的です。また、移動させる際はpositionプロパティの値がabsolute等の対応した値である必要があります。</p>
+                <pre><code>
+    var target=document.getElementById(“target”);
+    target.style.position="absolute";
+    target.style.left=“300px”;
+    target.style.top=“200px”;
+                </code></pre>
+                <p>Kentaur.jsでは以下のように1行にまとめて記述することができます。</p>
+                <pre><code>E(“div#target”).move(300,200);</pre></code>
+                <p>また、第3引数に整数値(ms)を入力することで、速度を指定したアニメーション移動も行う事ができます。以下の場合は3秒間かけて300,200の座標上に要素を移動する事となります。</p>
+                <pre><code>E(“div#target”).move(300,200,3000);</pre></code>
+                <p>（メモ）複数箇所を移動するアニメーションに関してはES2016で実装されたasync/await機能を利用することで実装可能です。以下は実装例となります。（<a href="../examples/example_move.html">サンプルページ</a>）</p>
+                <pre><code>
+    function wait(ms){
+        return new Promise(r=>setTimeout(r,ms));
+    }
+    async function main(){
+        E("body").arc(0,0,50,50);
+        await wait(2000);
+        E(".arc").move(100,100,1000);
+        await wait(2000);
+        E(".arc").move(200,300,1000);
+        await wait(2000);
+        E(".arc").move(300,200,1000);
+    }       
+    window.onload=main;
+                </code></pre>
+            </div>
+        </div>
+    <footer>Kentaur.js Docs<br>(C)2021 Takahiro Misaka</footer>
+    </body>
+</html>
