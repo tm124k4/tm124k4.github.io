@@ -1,5 +1,7 @@
 /** kentaur.js
  *  (c)2021 Takahiro Misaka
+ *  Released under the MIT license.
+ *  https://github.com/tamisaka/kentaur/
  */
 
 
@@ -38,8 +40,10 @@ E=function(e){
             c.setAttribute("class","line");
             e.appendChild(c);
             c.animate({width:[0+E.units,l+E.units]},speed)
+   
             return E(e);
-        },box:function(x,y,w,h){
+        },
+        box:function(x,y,w,h){
             var c=document.createElement("span");
             c.style=`
                 transform-origin:50% 50%;
@@ -190,16 +194,75 @@ E=function(e){
             e.appendChild(c);
             return E(e);
         },
-        move:function(bx,by,ms){
-            var o=e.getBoundingClientRect(),
-            ax=o.x,ay=o.y;
-            e.animate([ 
-                {left:ax+E.units,top:ay+E.units},
-                {left:bx+E.units,top:by+E.units}
-            ],ms);
-            e.style.left=bx+E.units;
-            e.style.top=by+E.units;
-        return E(e);
+        move:function(x,y,easetype,duration=0){
+            var b=e.getBoundingClientRect(),
+            ax=b.x,ay=b.y,
+            px=ax,py=ay,
+            gx=0,gy=0,
+            ox=ax-x,oy=ay-y,begin=Date.now(),
+            xreverse=1,yreverse=1,easefunc,now;
+
+            //現在座標より指定座標が上もしくは左の場合、その軸の進捗を逆転する
+            if(x<ax){xreverse=-1;gx=100}
+            if(y<ay){yreverse=-1;gy=100}
+            //同じ軸同士の現在座標と指定座標が同じだった場合、その軸は進捗を停止する
+            if(x==ax){xreverse=0;gx=100}
+            if(y==ay){yreverse=0;gy=100}
+
+            //イージングタイプによって処理を分ける
+            if(Number.isInteger(easetype)){
+                duration=easetype;
+                easefunc=E.easelist.linear
+            }else{
+                easefunc=E.easelist[easetype]
+            }
+            
+
+            //移動する
+            e.style.setProperty("--move","true")
+            var move = function(){
+
+                //進捗（0〜100%）を加算する。durationに指定したms分時間がかかる
+                now=Date.now()
+                gx=(now-begin)/duration*100
+                gy=(now-begin)/duration*100
+                gx=Math.max(0,Math.min(gx,100));
+                gy=Math.max(0,Math.min(gy,100));
+
+                //進捗に応じて実際に要素を移動
+                //移動方向が逆手している場合、現在位置に対して減算する
+                if(xreverse>0){
+                    px = x * easefunc(gx / 100) + ax;
+                }else{
+                    px = ax - ox * easefunc(gx / 100);
+                }
+                if(yreverse>0){
+                    py = y * easefunc(gy / 100) + ay;
+                }else{
+                    py = ay - oy * easefunc(gy / 100) 
+                }
+                e.style.left=px+"px"
+                e.style.top=py+"px"
+        
+                //アニメーションが完了していない場合
+                //かつ、その要素のCSSカスタムプロパティの--moveがtrueである場合は続行
+                if(
+                    (gx >= 0 || gx <= 100) && (gy >= 0 || gy <= 100)
+                    && e.style.getPropertyValue("--move")=="true"
+                ){
+                    requestAnimationFrame(move)
+                }
+                
+            }
+        
+            //初回実行
+            requestAnimationFrame(move);
+            
+            //移動完了したタイミングで--moveをfalseにしておく
+            setTimeout(function(){
+                e.style.setProperty("--move","false")
+            },duration)
+            return E(e);
         },
         fadein:function(m){
             e.animate({opacity:[0,1]},m);
@@ -232,3 +295,19 @@ E.aspeed=0
 E.delay=0;
 
 
+E.easelist={
+
+linear      :function(p){return p},
+insine      :function(p){return 1-Math.cos((p*3.14)/2)},
+outsine     :function(p){return Math.sin((p*3.14)/2)},
+inoutsine   :function(p){return -(Math.cos(3.14*p)-1)/2},
+incubic     :function(p){return p*p*p},
+outcubic    :function(p){return 1-((1-p)*(1-p)*(1-p))},
+inoutcubic  :function(p){return p<0.5?4*p*p*p:1-((-2*p+2)**3)/2},
+inquint     :function(p){return p**5},
+outquint    :function(p){return 1-((1-p)**5)},
+inoutquint  :function(p){return p<0.5?16*(p**5):1-((-2*p+2)**5)/2},
+incirc      :function(p){return 1-Math.sqrt(1-(p*p))},
+outcirc     :function(p){return Math.sqrt(1-((p-1)**2))},
+inoutcirc   :function(p){return p<0.5?(1-Math.sqrt(1-((2*p)**2)))/2:(Math.sqrt(1-((-2*p+2)**2))+1)/2}
+}

@@ -30,7 +30,7 @@
                 <hr>
                 <h3>概要</h3><br>
                 <p>E().move()は、E()で取得したHTMLエレメントを任意の2D座標に移動させるメソッドです。</p>
-                <pre><code>move(x,y,speed)</pre></code>
+                <pre><code>move(x,y,easetype,speed)</pre></code>
                 <table class="table table-striped">
                 <thead>
                 <tr class="header">
@@ -54,6 +54,12 @@
                 <td>yes</td>
                 </tr>
                 <tr class="odd">
+                <td>easetype</td>
+                <td>イージングの種類<br>または速度(ms)</td>
+                <td>String<br>Number</td>
+                <td>no</td>
+                </tr>
+                <tr class="even">
                 <td>speed</td>
                 <td>速度(ms)</td>
                 <td>Number</td>
@@ -69,7 +75,7 @@
     target.style.left=“300px”;
     target.style.top=“200px”;
                 </code></pre>
-                <p>Kentaur.jsでは以下のように1行にまとめて記述することができます。</p>
+                <p>Kentaur.jsでは以下のように1行にまとめて記述することができます。以下の例では即時に300px,200pxの2D座標上に要素を移動することになります。</p>
                 <pre><code>E(“div#target”).move(300,200);</pre></code>
                 <p>また、第3引数に整数値(ms)を入力することで、速度を指定したアニメーション移動も行う事ができます。以下の場合は3秒間かけて300,200の座標上に要素を移動する事となります。</p>
                 <pre><code>E(“div#target”).move(300,200,3000);</pre></code>
@@ -88,6 +94,39 @@
         E(".arc").move(300,200,1000);
     }       
     window.onload=main;
+                </code></pre>
+                <p>第3引数に指定したいイージングタイプを入力した場合、そのイージングタイプに従って第4引数に指定された速度で移動します。第3引数に直接数字(Number)を入力した場合は等間隔で移動します。</p>
+                <p>現在指定できるイージングタイプは次の通りです。</p>
+                <pre><code>
+        linear
+        insine
+        outsine
+        inoutsine
+        incubic
+        outcubic
+        inoutcubic
+        inquint
+        outquint
+        inoutquint
+        incirc
+        outcirc
+        inoutcirc
+                </code></pre>
+                <p>イージングを指定した場合のサンプルコードは以下のようになります。（<a href="../examples/example_move_2.html">サンプルページ</a>）</p>
+                <pre><code>
+        function wait(ms){
+            return new Promise(r=>setTimeout(r,ms));
+        }
+        async function main(){
+            E("body").arc(0,0,50,50);
+            await wait(2000);
+            E(".arc").move(500,100,"inoutcirc",3000)
+            await wait(4000);
+            E(".arc").move(100,100,"inoutcirc",3000)
+            await wait(4000);
+            E(".arc").move(320,500,"inoutcirc",3000)
+        }       
+        window.onload=main;
                 </code></pre>
             </div>
         </div>
