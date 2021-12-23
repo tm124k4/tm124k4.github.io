@@ -194,7 +194,7 @@ E=function(e){
             e.appendChild(c);
             return E(e);
         },
-        move:function(x,y,easetype,duration=0){
+        move:function(x,y,easetype="linear",duration=0){
             var b=e.getBoundingClientRect(),
             ax=b.x,ay=b.y,
             px=ax,py=ay,
@@ -214,10 +214,9 @@ E=function(e){
                 duration=easetype;
                 easefunc=E.easelist.linear
             }else{
-                easefunc=E.easelist[easetype]
+                easefunc=E.easelist[easetype.toLowerCase()]
             }
             
-
             //移動する
             e.style.setProperty("--move","true")
             var move = function(){
@@ -230,7 +229,7 @@ E=function(e){
                 gy=Math.max(0,Math.min(gy,100));
 
                 //進捗に応じて実際に要素を移動
-                //移動方向が逆手している場合、現在位置に対して減算する
+                //移動元が移動先より手前にある場合、現在位置に対して減算する
                 if(xreverse>0){
                     px = x * easefunc(gx / 100) + ax;
                 }else{
@@ -280,6 +279,7 @@ E=function(e){
     }
 }
 
+//現在の状態
 E.oldtarget="";
 E.result=0;
 E.fcolor="rgba(250,0,0,1.0)";
@@ -293,21 +293,37 @@ E.bwidth=10;
 E.units="px";
 E.aspeed=0
 E.delay=0;
-
-
+//イージング関連
 E.easelist={
-
 linear      :function(p){return p},
 insine      :function(p){return 1-Math.cos((p*3.14)/2)},
 outsine     :function(p){return Math.sin((p*3.14)/2)},
 inoutsine   :function(p){return -(Math.cos(3.14*p)-1)/2},
-incubic     :function(p){return p*p*p},
-outcubic    :function(p){return 1-((1-p)*(1-p)*(1-p))},
-inoutcubic  :function(p){return p<0.5?4*p*p*p:1-((-2*p+2)**3)/2},
+incubic     :function(p){return p**3},
+outcubic    :function(p){return 1-((1-p)**3)},
+inoutcubic  :function(p){return p<0.5?4*p**3:1-((-2*p+2)**3)/2},
 inquint     :function(p){return p**5},
 outquint    :function(p){return 1-((1-p)**5)},
 inoutquint  :function(p){return p<0.5?16*(p**5):1-((-2*p+2)**5)/2},
 incirc      :function(p){return 1-Math.sqrt(1-(p*p))},
 outcirc     :function(p){return Math.sqrt(1-((p-1)**2))},
-inoutcirc   :function(p){return p<0.5?(1-Math.sqrt(1-((2*p)**2)))/2:(Math.sqrt(1-((-2*p+2)**2))+1)/2}
+inoutcirc   :function(p){return p<0.5?(1-Math.sqrt(1-((2*p)**2)))/2:(Math.sqrt(1-((-2*p+2)**2))+1)/2},
+inback      :function(p){return 2.7*(p**3)-1.7*p*p},
+outback     :function(p){return 1+2.7*((p-1)**3)+1.7*((p-1)**2)},
+inoutback   :function(p){return p<0.5?(((2*p)**2)*(3.6*2*p-2.6))/2:(((2*p-2)**2)*(3.6*(p*2-2)+2.6)+2)/2},
+inexpo      :function(p){return p==0?0:2**(10*p-10)},
+outexpo     :function(p){return p==1?1:1-(2**(-10*p))},
+inoutexpo   :function(p){return p==0?0:p==1?1:p<0.5?(2**(20*p-10))/2:(2-(2**(-20*p+10)))/2},
+inquart     :function(p){return p**4},
+outquart    :function(p){return 1-((1-p)**4)},
+inoutquart  :function(p){return p<0.5?8*(p**4):1-((-2*p+2)**4)/2},
+inquad      :function(p){return p*p},
+outquad     :function(p){return 1-(1-p)**2},
+inoutquad   :function(p){return p<0.5?2*p*p:1-((-2*p+2)**2)/2},
+outbounce   :function(p){return p<0.37?7.5625*p*p:p<0.73?7.5625*(p-=0.5454)*p+0.75:p<0.91?7.5625*(p-=0.8181)*p+0.9375:7.5625*(p-=0.9545)*p+0.984375;},
+inbounce    :function(p){return 1-E.easelist.outbounce(1-p)},
+inoutbounce :function(p){return p<0.5?(1-E.easelist.outbounce(1-2*p))/2:(1+E.easelist.outbounce(2*p-1))/2},
+inelastic   :function(p){return p==0?0:p==1?1:-(2**(10*p-10))*Math.sin((p*10-10.75)*2.0933)},
+outelastic  :function(p){return p==0?0:p==1?1:2**(-10*p)*Math.sin((p*10-0.75)*2.0933)+1},
+inoutelastic:function(p){return p==0?0:p==1?1:p<0.5?-(2**(20*p-10)*Math.sin((20*p-11.125)*1.3955))/2:(2**(-20*p+10)*Math.sin((20*p-11.125)*1.3955))/2+1}
 }
