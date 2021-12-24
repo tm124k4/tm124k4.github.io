@@ -127,14 +127,6 @@ E=function(e){
             e.appendChild(a);
             return E(e);
         },
-        fadeout:function(m){
-            if(q.offsetWidth>1){
-                q.animate({opacity:[1,0]},m);
-                q.style.opacity="0";
-                var _q=q;
-                return setTimeout(function(){_q.remove()},m-1)
-            }
-        },
         /**
          * 円グラフを作成します。
          * @param {Number} a 数値a 
@@ -263,15 +255,54 @@ E=function(e){
             },duration)
             return E(e);
         },
-        fadein:function(m){
-            e.animate({opacity:[0,1]},m);
-            e.style.opacity="1";
+        fadeout:function(easetype,duration,reverse=false){
+            easetype=easetype.toLowerCase()
+            var begin=performance.now(),easefunc,now;
+
+            //イージングタイプによって処理を分ける
+            if(Number.isInteger(easetype)){
+                duration=easetype;
+                easefunc=E.easelist.linear
+            }else{
+                easefunc=E.easelist[easetype]
+            }
+            //移動する
+            e.style.setProperty("--fade","true")
+            var ease = function(){
+                //進捗（0〜100%）を加算する。durationに指定したms分時間がかかる
+                now=performance.now()
+                gx=Math.max(0,Math.min(((now-begin)/duration*100),100));
+           
+                //reverseがtrueならフェードを逆転させる
+                if(reverse){
+                    //フェードイン
+                    e.style.opacity = 1-1/(gx*easefunc(gx/100));
+                }else{
+                    //フェードアウト
+                    e.style.opacity = 1/(gx*easefunc(gx/100));
+                }
+
+                //その要素のCSSカスタムプロパティの--fadeがtrueである場合は続行
+                if( 
+                    e.style.getPropertyValue("--fade")=="true"
+                ){
+                    requestAnimationFrame(ease)
+                }else{
+                    e.style.opacity=0||reverse|0;
+                }
+            }
+            
+            //初回実行
+            requestAnimationFrame(ease);
+            
+            //移動完了したタイミングで--fadeをfalseにしておく
+            setTimeout(function(){
+                e.style.setProperty("--fade","false")
+            },duration)
             return E(e);
         },
-        fadeout:function(m){
-            e.animate({opacity:[1,0]},m);
-            e.style.opacity="0";
-            return E(e);
+        fadein:function(easetype,duration){
+            E(e).fadeout(easetype,duration,true)
         },
         dom:function(){
             return e;
@@ -280,6 +311,8 @@ E=function(e){
 }
 
 //現在の状態
+
+
 E.oldtarget="";
 E.result=0;
 E.fcolor="rgba(250,0,0,1.0)";
@@ -293,6 +326,7 @@ E.bwidth=10;
 E.units="px";
 E.aspeed=0
 E.delay=0;
+
 //イージング関連
 E.easelist={
 linear      :function(p){return p},

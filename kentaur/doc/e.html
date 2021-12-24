@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang='ja'>
+    <head>
+        <meta charset="utf-8">
+        <title>E - Kentaur.js</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
+
+        <style>
+            *{
+                font-size:12pt;
+                line-height:1.5em;
+            }
+
+            pre{
+                background-color:#ddd!important;
+            }
+        </style>
+    </head><header>Kentaur.js - E</header>
+<div class="row">
+    <div class="col-md-2">
+        <a href="e.html">E</a><br>
+        <hr>
+        <a href="arc.html">arc</a><br>
+        <a href="box.html">box</a><br>
+        <a href="delta.html">delta</a><br>
+        <a href="fadeout.html">fadeout</a><br>
+        <a href="hex.html">hex</a><br>
+        <a href="line.html">line</a><br>
+        <a href="move.html">move</a><br>
+    </div>
+    <div class="col-md-9"><h1>
+E()
+</h1>
+<p>E(element)</p>
+<table>
+<thead>
+<tr class="header">
+<th>引数</th>
+<th>内容</th>
+<th>型</th>
+<th>必須</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>element</td>
+<td>取得したい要素のCSSセレクタ<br>またはElementそのもの</td>
+<td>String<br>Object</td>
+<td>yes</td>
+</tr>
+</tbody>
+</table>
+<p>E()は、Kentaur.jsにおけるHTMLから任意の要素を取得するためのセレクタです。CSSセレクタで取得したい要素を選択します。</p>
+<pre><code>E("body");
+E(document.body);
+E("div#target");</code></pre>
+<p>document.querySelectorと使い方はほとんど同じですが、返り値にはエレメントが直接取得されるのではなく、取得した要素の子要素として線を描画したり、取得した要素自体をアニメーション移動させるための様々な関数が渡されます。</p>
+</div>
+</div>
+<footer>Kentaur.js Docs<br>(C)2021 Takahiro Misaka</footer>
+</body>
+</html>

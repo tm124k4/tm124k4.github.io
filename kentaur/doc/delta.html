@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang='ja'>
+    <head>
+        <meta charset="utf-8">
+        <title>delta - Kentaur.js</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
+
+        <style>
+            *{
+                font-size:12pt;
+                line-height:1.5em;
+            }
+
+            pre{
+                background-color:#ddd!important;
+            }
+        </style>
+    </head><header>Kentaur.js - delta</header>
+<div class="row">
+    <div class="col-md-2">
+        <a href="e.html">E</a><br>
+        <hr>
+        <a href="arc.html">arc</a><br>
+        <a href="box.html">box</a><br>
+        <a href="delta.html">delta</a><br>
+        <a href="fadeout.html">fadeout</a><br>
+        <a href="hex.html">hex</a><br>
+        <a href="line.html">line</a><br>
+        <a href="move.html">move</a><br>
+    </div>
+    <div class="col-md-9"><h1>
+delta
+</h1>
+<hr>
+<pre><code>delta(x,y,w,h,d)</code></pre>
+<h3>
+概要
+</h3>
+<p>E().delta()は、spanによる三角形を描くメソッドです。描画されたspanはE()で取得したエレメントの下に追加されます。描かれる三角形は正三角形または二等辺三角形であり、頂点は画面上に対して通常真上（0度）から始まります。</p>
+<table>
+<thead>
+<tr class="header">
+<th>引数</th>
+<th>内容</th>
+<th>型</th>
+<th>必須</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>x</td>
+<td>左上x座標</td>
+<td>Number</td>
+<td>yes</td>
+</tr>
+<tr class="even">
+<td>y</td>
+<td>左上y座標</td>
+<td>Number</td>
+<td>yes</td>
+</tr>
+<tr class="odd">
+<td>w</td>
+<td>横幅</td>
+<td>Number</td>
+<td>yes</td>
+</tr>
+<tr class="even">
+<td>h</td>
+<td>縦幅</td>
+<td>Number</td>
+<td>no</td>
+</tr>
+<tr class="odd">
+<td>d</td>
+<td>角度</td>
+<td>Number</td>
+<td>no</td>
+</tr>
+</tbody>
+</table>
+<h3>
+解説
+</h3>
+<p>通常、Javascriptを用いてブラウザ上で三角形を描くにはcanvasやSVGがよく使われます。しかし、どちらもデフォルトでは描画する関数は用意されていません。</p>
+<pre><code>//canvasの場合
+var cv=document.getElementById("canvas1"),
+ctx=cv.getContext('2d');
+ctx.fillStyle='red';
+ctx.moveTo(75,50);
+ctx.lineTo(100,75);
+ctx.lineTo(100,25);
+ctx.fill();
+
+//SVGの場合
+var sv=document.getElementById("svg1"),
+path=document.createElementNS("http://www.w3.org/2000/svg","path");
+path.setAttribute('d','M50 0 L0 100 L100 100 Z');
+path.setAttribute('style','fill:red');
+sv.appendChild(path);
+</code></pre>
+<p>canvasで三角形を描く場合、ライブラリを使わない場合は描画に必要となる座標の計算を行う、あるいは、3点の座標を取得して、moveToとlineToを合計3回実行して一つなぎの三角形パスを作成する必要があります。</p>
+<p>角度を指定する場合、ライブラリなしで実行しようとするならばもっと複雑なコードになります。また、canvasの場合は一度描画した後に変形などを行う事は簡単ではありません。</p>
+<p>SVGで三角形を描く場合も各地点の計算は必須です。また、親要素がsvgであることが前提で、少なくとも２つ以上のタグを必要とします。</p>
+<p>kentaur.jsでは生成される新たなspan要素に対して自動的に必要なCSSスタイルを適用し、以下の通り１行にまとめて書くことができます。</p>
+<pre><code>E("div#kentaur1").delta(50,50,50,50,45)</pre>
+<p></code></p>
+<p>上記の場合、横50px,縦50pxの座標から横50px,縦50pxの四角形の範囲内で45度の方向を向いた正三角形が描かれます。縦幅と横幅が異なる場合は二等辺三角形が描かれます。また、縦幅を省略した場合は自動的に横幅のサイズで描画されます。</p>
+<p>現状、１色塗りつぶしのみ対応しています。</p>
+</div>
+</div>
+<footer>Kentaur.js Docs<br>(C)2021 Takahiro Misaka</footer>
+</body>
+</html>
