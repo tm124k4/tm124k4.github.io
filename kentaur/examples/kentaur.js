@@ -5,7 +5,7 @@
  */
 
 
- E=function(e){
+E=function(e){
     var type=Object.prototype.toString.call(e);
     //typecheck
     if(type=="[object String]" && e!==E){
@@ -23,6 +23,10 @@
 
     return {
         line:function(x1,y1,x2,y2,easetype,duration){
+            var t;
+            if(typeof x2==="string"){if(x2.indexOf("%")>-1){x2=window.innerWidth  * (parseInt(x2.split("%")[0]) / 100)}}
+            if(typeof y2==="string"){if(y2.indexOf("%")>-1){y2=window.innerHeight * (parseInt(y2.split("%")[0]) / 100)}}
+
             var c=document.createElement("span"),
             l=Math.hypot(y2-y1,x2-x1),
             d=Math.atan2(y2-y1,x2-x1)*180/Math.PI,
@@ -31,7 +35,7 @@
          
             c.style=`
                 transform-origin:left 50%;
-                position:absolute;
+                position:${E.position};
                 left:${x1}${E.units};
                 top:${y1}${E.units};
                 height:${E.width}${E.units};
@@ -341,6 +345,11 @@
         fadein:function(easetype,duration){
             E(e).fadeout(easetype,duration,true)
         },
+        remove:function(duration){
+            setTimeout(function(){
+                e.remove();
+            },duration)
+        },
         dom:function(){
             return e;
         }
@@ -349,7 +358,7 @@
 
 //現在の状態
 
-
+E.position="absolute"
 E.oldtarget="";
 E.result=0;
 E.fcolor="rgba(250,0,0,1.0)";
