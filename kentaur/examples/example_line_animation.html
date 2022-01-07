@@ -9,10 +9,10 @@ function wait(ms){
 async function main(){
     E.position="fixed";
     var randomA,randomB;
-    for(var i=0;i<500;i++){
+    while(true){
         randomA=Math.floor(Math.random()*(600-0)+0);
         randomB=Math.floor(Math.random()*(600-200)+200);
-        E("body").line(0,randomA,1000,randomB,"outsine",1000).fadeout("outsine",3000)
+        E("body").line(0,randomA,"100%",randomB,"outsine",1000).fadeout("outsine",3000).remove(3000)
         await wait(100)
     }
 }  
