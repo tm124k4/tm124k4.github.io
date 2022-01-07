@@ -1,11 +1,11 @@
 /** kentaur.js
- *  (c)2021 Takahiro Misaka
+ *  (c)2021-2022 Takahiro Misaka
  *  Released under the MIT license.
  *  https://github.com/tamisaka/kentaur/
  */
 
 
-E=function(e){
+ E=function(e){
     var type=Object.prototype.toString.call(e);
     //typecheck
     if(type=="[object String]" && e!==E){
@@ -22,26 +22,62 @@ E=function(e){
     }
 
     return {
-        line:function(x1,y1,x2,y2,speed){
+        line:function(x1,y1,x2,y2,easetype,duration){
             var c=document.createElement("span"),
             l=Math.hypot(y2-y1,x2-x1),
-            d=Math.atan2(y2-y1,x2-x1)*180/Math.PI;
-        
+            d=Math.atan2(y2-y1,x2-x1)*180/Math.PI,
+            progress;
+        //      width:${l}${E.units};
+         
             c.style=`
                 transform-origin:left 50%;
                 position:absolute;
                 left:${x1}${E.units};
                 top:${y1}${E.units};
-                width:${l}${E.units};
                 height:${E.width}${E.units};
                 transform:rotate(${d}deg);
                 background-color:${E.fcolor}                    
             `
             c.setAttribute("class","line");
             e.appendChild(c);
-            c.animate({width:[0+E.units,l+E.units]},speed)
+            //c.animate({width:[0+E.units,l+E.units]},speed)
    
-            return E(e);
+            easetype=easetype.toLowerCase()
+            var begin=performance.now(),easefunc,now;
+
+            //イージングタイプによって処理を分ける
+            if(Number.isInteger(easetype)){
+                duration=easetype;
+                easefunc=E.easelist.linear
+            }else{
+                easefunc=E.easelist[easetype]
+            }
+            //移動する
+            c.style.setProperty("--make-line","true")
+            var ease = function(){
+                //進捗（0〜100%）を加算する。durationに指定したms分時間がかかる
+                now=performance.now()
+                progress=Math.max(0,Math.min(((now-begin)/duration*100),100));
+            
+                    //フェードイン
+                    c.style.width = l*(1-1/(progress*easefunc(progress/100))) + E.units;
+
+
+                //その要素のCSSカスタムプロパティの--fadeがtrueである場合は続行
+                if( 
+                    progress<100 &&
+                    c.style.getPropertyValue("--make-line")=="true"
+                ){
+                    requestAnimationFrame(ease)
+                }else{
+                    c.style.setProperty("--make-line","false")
+                }
+            }
+            
+            //初回実行
+            requestAnimationFrame(ease);
+            
+            return E(c);
         },
         box:function(x,y,w,h){
             var c=document.createElement("span");
@@ -190,7 +226,7 @@ E=function(e){
             var b=e.getBoundingClientRect(),
             ax=b.x,ay=b.y,
             px=ax,py=ay,
-            gx=0,gy=0,
+            progress,
             ox=ax-x,oy=ay-y,begin=Date.now(),
             xreverse=1,yreverse=1,easefunc,now;
 
@@ -215,33 +251,36 @@ E=function(e){
 
                 //進捗（0〜100%）を加算する。durationに指定したms分時間がかかる
                 now=Date.now()
-                gx=(now-begin)/duration*100
-                gy=(now-begin)/duration*100
-                gx=Math.max(0,Math.min(gx,100));
-                gy=Math.max(0,Math.min(gy,100));
+                progress=(now-begin)/duration*100
+                //gy=(now-begin)/duration*100
+                progress=Math.max(0,Math.min(progress,100));
+                //gy=Math.max(0,Math.min(gy,100));
 
                 //進捗に応じて実際に要素を移動
                 //移動元が移動先より手前にある場合、現在位置に対して減算する
                 if(xreverse>0){
-                    px = x * easefunc(gx / 100) + ax;
+                    px = x * easefunc(progress / 100) + ax;
                 }else{
-                    px = ax - ox * easefunc(gx / 100);
+                    px = ax - ox * easefunc(progress / 100);
                 }
                 if(yreverse>0){
-                    py = y * easefunc(gy / 100) + ay;
+                    py = y * easefunc(progress / 100) + ay;
                 }else{
-                    py = ay - oy * easefunc(gy / 100) 
+                    py = ay - oy * easefunc(progress / 100) 
                 }
                 e.style.left=px+"px"
                 e.style.top=py+"px"
-        
+                console.log(progress);
                 //アニメーションが完了していない場合
                 //かつ、その要素のCSSカスタムプロパティの--moveがtrueである場合は続行
                 if(
-                    (gx >= 0 || gx <= 100) && (gy >= 0 || gy <= 100)
+                    (progress > 0 && progress < 100)
                     && e.style.getPropertyValue("--move")=="true"
                 ){
                     requestAnimationFrame(move)
+                }else{
+                    //アニメーション完了時
+                    e.style.setProperty("--move","false")
                 }
                 
             }
@@ -250,14 +289,11 @@ E=function(e){
             requestAnimationFrame(move);
             
             //移動完了したタイミングで--moveをfalseにしておく
-            setTimeout(function(){
-                e.style.setProperty("--move","false")
-            },duration)
             return E(e);
         },
         fadeout:function(easetype,duration,reverse=false){
             easetype=easetype.toLowerCase()
-            var begin=performance.now(),easefunc,now;
+            var begin=performance.now(),easefunc,now,progress;
 
             //イージングタイプによって処理を分ける
             if(Number.isInteger(easetype)){
@@ -271,24 +307,27 @@ E=function(e){
             var ease = function(){
                 //進捗（0〜100%）を加算する。durationに指定したms分時間がかかる
                 now=performance.now()
-                gx=Math.max(0,Math.min(((now-begin)/duration*100),100));
+                progress=Math.max(0,Math.min(((now-begin)/duration*100),100));
            
                 //reverseがtrueならフェードを逆転させる
                 if(reverse){
                     //フェードイン
-                    e.style.opacity = 1-1/(gx*easefunc(gx/100));
+                    e.style.opacity = 1-1/(progress*easefunc(progress/100));
                 }else{
                     //フェードアウト
-                    e.style.opacity = 1/(gx*easefunc(gx/100));
+                    e.style.opacity = 1/(progress*easefunc(progress/100));
                 }
 
                 //その要素のCSSカスタムプロパティの--fadeがtrueである場合は続行
-                if( 
+                if(
+                    progress<100 &&
                     e.style.getPropertyValue("--fade")=="true"
                 ){
                     requestAnimationFrame(ease)
                 }else{
                     e.style.opacity=0||reverse|0;
+
+                e.style.setProperty("--fade","false")
                 }
             }
             
@@ -296,9 +335,7 @@ E=function(e){
             requestAnimationFrame(ease);
             
             //移動完了したタイミングで--fadeをfalseにしておく
-            setTimeout(function(){
-                e.style.setProperty("--fade","false")
-            },duration)
+
             return E(e);
         },
         fadein:function(easetype,duration){
