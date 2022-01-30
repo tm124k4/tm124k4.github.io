@@ -1,0 +1,61 @@
+<html>
+    <head>
+    <meta charset="utf-8">
+    <script src="kentaur.js"></script>
+    <script>
+        function rnd(min,max){
+            min=min|0;
+            max=max|0;
+            return Math.floor(Math.random()*(max-min)+min);
+        }
+        function wait(ms){
+            return new Promise(r=>setTimeout(r,ms));
+        }
+        async function main(){
+            E("body").text("setcolor example").fontsize("32pt")
+
+            E("body").box(300,300,200,200)
+            E("body").box(300,100,200,200)
+            E("body").box(400,200,200,200)
+
+
+            while(true){
+
+                E(".box",0).bcolor({
+                    r:rnd(0,255),
+                    g:rnd(0,255),
+                    b:rnd(0,255),
+                    a:1
+                    },"inoutquad",3000)
+
+                E(".box",1).bcolor({
+                    r:rnd(0,255),
+                    g:rnd(0,255),
+                    b:rnd(0,255),
+                    a:1
+                    },"inoutquad",3000)
+
+                E(".box",2).bcolor({
+                    r:rnd(0,255),
+                    g:rnd(0,255),
+                    b:rnd(0,255),
+                    a:Math.random()
+                    },"inoutquad",3000)
+
+
+                E("body").fcolor({
+                    r:rnd(0,255),
+                    g:rnd(0,255),
+                    b:rnd(0,255),
+                    a:Math.random()
+                },"inoutquad",3000)
+                await wait(3500)
+            }
+        }       
+        window.onload=main;
+        </script>
+    </head>
+    <body>
+        
+    </body>
+</html>
