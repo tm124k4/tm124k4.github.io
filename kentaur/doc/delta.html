@@ -50,25 +50,25 @@ delta
 <tr class="odd">
 <td>x</td>
 <td>左上x座標</td>
-<td>Number</td>
+<td>Number<br>String</td>
 <td>yes</td>
 </tr>
 <tr class="even">
 <td>y</td>
 <td>左上y座標</td>
-<td>Number</td>
+<td>Number<br>String</td>
 <td>yes</td>
 </tr>
 <tr class="odd">
 <td>w</td>
 <td>横幅</td>
-<td>Number</td>
+<td>Number<br>String</td>
 <td>yes</td>
 </tr>
 <tr class="even">
 <td>h</td>
 <td>縦幅</td>
-<td>Number</td>
+<td>Number<br>String</td>
 <td>no</td>
 </tr>
 <tr class="odd">
@@ -105,7 +105,7 @@ sv.appendChild(path);
 <p>kentaur.jsでは生成される新たなspan要素に対して自動的に必要なCSSスタイルを適用し、以下の通り１行にまとめて書くことができます。</p>
 <pre><code>E("div#kentaur1").delta(50,50,50,50,45)</pre>
 <p></code></p>
-<p>上記の場合、横50px,縦50pxの座標から横50px,縦50pxの四角形の範囲内で45度の方向を向いた正三角形が描かれます。縦幅と横幅が異なる場合は二等辺三角形が描かれます。また、縦幅を省略した場合は自動的に横幅のサイズで描画されます。</p>
+<p>上記の場合、横50px,縦50pxの座標から横50px,縦50pxの四角形の範囲内で45度の方向を向いた正三角形が描かれます。縦幅と横幅が異なる場合は二等辺三角形が描かれます。また、縦幅を省略した場合は自動的に横幅のサイズで描画されます。また、各引数は文字列型でも入力可能で、%のようにCSSで有効な記法を用いて表現することも可能です。</p>
 <p>現状、１色塗りつぶしのみ対応しています。</p>
 </div>
 </div>

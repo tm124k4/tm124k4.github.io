@@ -50,25 +50,25 @@ box
 <tr class="odd">
 <td>x</td>
 <td>左上x座標</td>
-<td>Number</td>
+<td>Number<br>String</td>
 <td>yes</td>
 </tr>
 <tr class="even">
 <td>y</td>
 <td>左上y座標</td>
-<td>Number</td>
+<td>Number<br>String</td>
 <td>yes</td>
 </tr>
 <tr class="odd">
 <td>w</td>
 <td>横幅</td>
-<td>Number</td>
+<td>Number<br>String</td>
 <td>yes</td>
 </tr>
 <tr class="even">
 <td>h</td>
 <td>縦幅</td>
-<td>Number</td>
+<td>Number<br>String</td>
 <td>yes</td>
 </tr>
 </tbody>
@@ -94,14 +94,14 @@ rect.setAttribute('fill','red');
 rect.setAttribute('stroke','black');
 sv.appendChild(rect);
 </code></pre>
-<p>canvasでは比較的容易にコーディング可能ですが、後から変形したりする事が難しくなっています。</p>
-<p>SVGで円を描く場合は親要素がsvgであることが前提です。また、少なくとも２つ以上のタグを必要とするほか、シンプルな図形を描くためのコードの行数が多くなってしまいます。</p>
+<p>canvasでは比較的容易にコーディング可能です。しかし、ライブラリなしに行う場合、後から描画した図形を変形させる事は少し複雑で多くのコード量が必要になります。</p>
+<p>SVGで円を描く場合は親要素がsvgであることが前提です。また、少なくとも２つ以上のタグを必要とするほか、シンプルな図形を描くために必要なコードの行数が多くなってしまいます。</p>
 <p>kentaur.jsでは生成される新たなspan要素に対して自動的に必要なCSSスタイルを適用し、以下の通り１行にまとめて書くことができます。</p>
 <pre><code>E("div#kentaur1").box(50,50,50,50)</pre>
 <p></code></p>
-<p>上記の場合、横50px,縦50pxの座標から横50px,縦50pxの範囲内で四角形を描きます。縦横の幅が一致していない場合は長方形になります。</p>
+<p>上記の場合、横50px,縦50pxの座標から横50px,縦50pxの範囲内で四角形を描きます。縦横の幅が一致していない場合は長方形になります。また、各引数は文字列型でも入力可能で、%のようにCSSで有効な記法を用いて表現することも可能です。</p>
 </div>
 </div>
-<footer>Kentaur.js Docs<br>(C)2021 Takahiro Misaka</footer>
+<footer>Kentaur.js Docs<br>(C)2021-2022 Takahiro Misaka</footer>
 </body>
 </html>

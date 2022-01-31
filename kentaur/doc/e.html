@@ -48,15 +48,22 @@ E()
 <td>String<br>Object</td>
 <td>yes</td>
 </tr>
+<tr class="even">
+<td>nth</td>
+<td>取得したい要素の番号</td>
+<td>Number</td>
+<td>no</td>
+</tr>
 </tbody>
 </table>
 <p>E()は、Kentaur.jsにおけるHTMLから任意の要素を取得するためのセレクタです。CSSセレクタで取得したい要素を選択します。</p>
 <pre><code>E("body");
 E(document.body);
-E("div#target");</code></pre>
-<p>document.querySelectorと使い方はほとんど同じですが、返り値にはエレメントが直接取得されるのではなく、取得した要素の子要素として線を描画したり、取得した要素自体をアニメーション移動させるための様々な関数が渡されます。</p>
+E("div#target");
+E(".target",2)</code></pre>
+<p>javascript標準の関数であるdocument.querySelectorAllと使い方はほとんど同じですが、返り値にはエレメントそのものではなく、kentaurの様々なメソッドを内包したオブジェクト、すなわち取得した要素の子要素として線を描画したり、取得した要素自体をアニメーション移動させるための様々な関数が渡されます。</p>
 </div>
 </div>
-<footer>Kentaur.js Docs<br>(C)2021 Takahiro Misaka</footer>
+<footer>Kentaur.js Docs<br>(C)2021-2022 Takahiro Misaka</footer>
 </body>
 </html>

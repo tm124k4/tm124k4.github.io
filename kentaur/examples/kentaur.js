@@ -66,8 +66,7 @@ E=function(e,nth=0){
                     //フェードイン
                     c.style.width = l*(1-1/(progress*easefunc(progress/100))) + E.units;
 
-
-                //その要素のCSSカスタムプロパティの--fadeがtrueである場合は続行
+                //その要素のCSSカスタムプロパティの--make-lineがtrueである場合は続行
                 if( 
                     progress<100 &&
                     c.style.getPropertyValue("--make-line")=="true"
@@ -411,7 +410,7 @@ E=function(e,nth=0){
         getbcolor:function(){
             return E(e).getcolor("background-color");
         },
-        setcolor:function(type,colorB,easetype,duration){
+        setcolor:function(type,colorB,easetype,duration=0){
             var cstr,colorA,diff={},r,g,b,a;
 
             // 指定しようとする色の書式が文字列型の場合
