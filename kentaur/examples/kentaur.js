@@ -31,7 +31,7 @@ E=function(e,nth=0){
             l=Math.hypot(y2-y1,x2-x1),
             d=Math.atan2(y2-y1,x2-x1)*180/Math.PI,
             progress;
-        //      width:${l}${E.units};
+        //      width:${l};
          
             c.style=`
                 transform-origin:left 50%;
@@ -85,13 +85,18 @@ E=function(e,nth=0){
         },
         box:function(x,y,w,h){
             var c=document.createElement("span");
+            if(typeof x!=="string"){x=x+E.units}
+            if(typeof y!=="string"){y=y+E.units}
+            if(typeof w!=="string"){w=w+E.units}
+            if(typeof h!=="string"){h=h+E.units}
+
             c.style=`
                 transform-origin:50% 50%;
-                position:absolute;
-                left:${x}${E.units};
-                top:${y}${E.units};
-                width:${w}${E.units};
-                height:${h}${E.units};
+                position:${E.position};
+                left:${x};
+                top:${y};
+                width:${w};
+                height:${h};
                 border:${E.border};
                 background-color:${E.fcolor};
             `
@@ -101,13 +106,18 @@ E=function(e,nth=0){
         },
         arc:function(x,y,w,h){
             var c=document.createElement("span");
+            if(typeof x!=="string"){x=x+E.units}
+            if(typeof y!=="string"){y=y+E.units}
+            if(typeof w!=="string"){w=w+E.units}
+            if(typeof h!=="string"){h=h+E.units}
+
             c.style=`
                 transform-origin:50% 50%;
-                position:absolute;
-                left:${x}${E.units};
-                top:${y}${E.units};
-                width:${w}${E.units};
-                height:${h}${E.units};
+                position:${E.position};
+                left:${x};
+                top:${y};
+                width:${w};
+                height:${h};
                 border:${E.border};
                 background-color:${E.fcolor};
                 border-radius:50%;
@@ -119,13 +129,17 @@ E=function(e,nth=0){
         hex:function(x,y,w=E.w,h){
             var c=document.createElement("span");
             if(h===void 0){h=w};
+            if(typeof x!=="string"){x=x+E.units}
+            if(typeof y!=="string"){y=y+E.units}
+            if(typeof w!=="string"){w=w+E.units}
+            if(typeof h!=="string"){h=h+E.units}
             c.style=`
                 transform-origin:50% 50%;
-                position:absolute;
-                left:${x}${E.units};
-                top:${y}${E.units};
-                width:${w}${E.units};
-                height:${h}${E.units};
+                position:${E.position};
+                left:${x};
+                top:${y};
+                width:${w};
+                height:${h};
                 background-color:${E.fcolor};
                 clip-path:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%)
             `
@@ -136,13 +150,17 @@ E=function(e,nth=0){
         delta:function(x,y,w=E.w,h,d=0){
             var c=document.createElement("span");
             if(h===void 0){h=w};
+            if(typeof x!=="string"){x=x+E.units}
+            if(typeof y!=="string"){y=y+E.units}
+            if(typeof w!=="string"){w=w+E.units}
+            if(typeof h!=="string"){h=h+E.units}
             c.style=`
                 transform-origin:50% 50%;
-                position:absolute;
-                left:${x}${E.units};
-                top:${y}${E.units};
-                width:${w}${E.units};
-                height:${h}${E.units};
+                position:${E.position};
+                left:${x};
+                top:${y};
+                width:${w};
+                height:${h};
                 background-color:${E.fcolor};
                 clip-path:polygon(50% 0,0 100%,100% 100%);
                 transform:rotate(${d}deg);
@@ -155,7 +173,7 @@ E=function(e,nth=0){
             var a=document.createElementNS("http://www.w3.org/2000/svg","svg"),
                 b=document.createElementNS("http://www.w3.org/2000/svg","path");
             a.style=`
-                position:absolute;
+                position:${E.position};
                 left:0;
                 top:0;
             `
@@ -180,7 +198,12 @@ E=function(e,nth=0){
          * @returns 
          */
         piechart:function(a,b,x,y,w,h,c1="blue",c2="red"){
-            var c=document.createElement("span"),
+            if(typeof x!=="string"){x=x+E.units}
+            if(typeof y!=="string"){y=y+E.units}
+            if(typeof w!=="string"){w=w+E.units}
+            if(typeof h!=="string"){h=h+E.units}
+
+            var c=document.createElement("span")
             p,trans="";
             if(a>b){
                 p=b/a*100;
@@ -204,11 +227,11 @@ E=function(e,nth=0){
             }
 
             c.style=`
-                position:absolute;
-                left:${x}${E.units};
-                top:${y}${E.units};
-                width:${w}${E.units};
-                height:${h}${E.units};
+                position:${E.position};
+                left:${x};
+                top:${y};
+                width:${w};
+                height:${h};
                 background-image:radial-gradient(${E.bcolor} 50%,transparent 51%),conic-gradient(${c1} 0% ${a}%,${c2} ${b}% 100%);
                 ${trans}
                 border-radius:50%;
@@ -449,7 +472,6 @@ E=function(e,nth=0){
                         colorB.a=1;
                     }
                 }
-            console.log(colorB);
             // 現在の要素の背景色を取得
                 colorA=E(e).getcolor(type);
                 diff.r=colorA.r-colorB.r
