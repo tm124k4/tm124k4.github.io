@@ -44,12 +44,12 @@ E=function(e,nth=0){
                 top:${yA};
                 height:${E.width}${E.units};
                 transform:rotate(${d}deg);
-                background-color:${E.fcolor}                    
+                background-color:${E.fcolor}
             `
             c.setAttribute("class","line");
             e.appendChild(c);
             //c.animate({width:[0+E.units,l+E.units]},speed)
-   
+
             var begin=performance.now(),easefunc,now;
 
             //イージングタイプによって処理を分ける
@@ -65,12 +65,12 @@ E=function(e,nth=0){
                 //進捗（0〜100%）を加算する。durationに指定したms分時間がかかる
                 now=performance.now()
                 progress=Math.max(0,Math.min(((now-begin)/duration*100),100));
-            
+
                     //フェードイン
                     c.style.width = l*(1-1/(progress*easefunc(progress/100))) + E.units;
 
                 //その要素のCSSカスタムプロパティの--make-lineがtrueである場合は続行
-                if( 
+                if(
                     progress<100 &&
                     c.style.getPropertyValue("--make-line")=="true"
                 ){
@@ -79,10 +79,10 @@ E=function(e,nth=0){
                     c.style.setProperty("--make-line","false")
                 }
             }
-            
+
             //初回実行
             requestAnimationFrame(ease);
-            
+
             return E(c);
         },
         box:function(x,y,w,h){
