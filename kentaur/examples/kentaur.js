@@ -64,15 +64,15 @@ E=function(e,nth=0){
             var ease = function(){
                 //進捗（0〜100%）を加算する。durationに指定したms分時間がかかる
                 now=performance.now()
-                progress=Math.max(0,Math.min(((now-begin)/duration*100),100));
+                progress=(now-begin)/duration*100;
 
                     //フェードイン
                     c.style.width = l*(1-1/(progress*easefunc(progress/100))) + E.units;
 
                 //その要素のCSSカスタムプロパティの--make-lineがtrueである場合は続行
                 if(
-                    progress<100 &&
-                    c.style.getPropertyValue("--make-line")=="true"
+                    progress<=100 &&
+                    c.style.getPropertyValue("--make-line")!="false"
                 ){
                     requestAnimationFrame(ease)
                 }else{
@@ -281,9 +281,6 @@ E=function(e,nth=0){
                 //進捗（0〜100%）を加算する。durationに指定したms分時間がかかる
                 now=Date.now()
                 progress=(now-begin)/duration*100
-                //gy=(now-begin)/duration*100
-                progress=Math.max(0,Math.min(progress,100));
-                //gy=Math.max(0,Math.min(gy,100));
 
                 //進捗に応じて実際に要素を移動
                 //移動元が移動先より手前にある場合、現在位置に対して減算する
@@ -303,8 +300,8 @@ E=function(e,nth=0){
                 //アニメーションが完了していない場合
                 //かつ、その要素のCSSカスタムプロパティの--moveがtrueである場合は続行
                 if(
-                    (progress > 0 && progress < 100)
-                    && e.style.getPropertyValue("--move")=="true"
+                    (progress >= 0 && progress <= 100)
+                    && e.style.getPropertyValue("--move")!="false"
                 ){
                     requestAnimationFrame(move)
                 }else{
@@ -335,7 +332,7 @@ E=function(e,nth=0){
             var ease = function(){
                 //進捗（0〜100%）を加算する。durationに指定したms分時間がかかる
                 now=performance.now()
-                progress=Math.max(0,Math.min(((now-begin)/duration*100),100));
+                progress=(now-begin)/duration*100
            
                 //reverseがtrueならフェードを逆転させる
                 if(reverse){
@@ -348,7 +345,7 @@ E=function(e,nth=0){
 
                 //その要素のCSSカスタムプロパティの--fadeがtrueである場合は続行
                 if(
-                    progress<100 &&
+                    progress<=100 &&
                     e.style.getPropertyValue("--fade")=="true"
                 ){
                     requestAnimationFrame(ease)
@@ -365,7 +362,7 @@ E=function(e,nth=0){
             return E(e);
         },
         fadein:function(easetype=0,duration=0){
-            E(e).fadeout(easetype,duration,true)
+            return E(e).fadeout(easetype,duration,true)
         },
         remove:function(duration=0){
             setTimeout(function(){
@@ -502,7 +499,7 @@ E=function(e,nth=0){
             var ease = function(){
                 //進捗（0〜100%）を加算する。durationに指定したms分時間がかかる
                 now=performance.now()
-                progress=Math.max(0,Math.min(((now-begin)/duration*100),100));
+                progress=(now-begin)/duration*100;
                 m=1-1/(progress*easefunc(progress/100));
                 if(diff.r!=0){
                     if(Math.sign(diff.r)==1){
@@ -539,7 +536,7 @@ E=function(e,nth=0){
 
                 e.style.setProperty(type,"rgba("+r+","+g+","+b+","+a+")");
                 //その要素のCSSカスタムプロパティの--fadeがtrueである場合は続行
-                if( e.style.getPropertyValue("--animations-"+type)!="false" && progress<100){
+                if( e.style.getPropertyValue("--animations-"+type)!="false" && progress<=100){
                         requestAnimationFrame(ease);
                 }else{
                     e.style.setProperty("--animations-"+type,"false")
@@ -583,7 +580,7 @@ E=function(e,nth=0){
                     x=A.split("rotateX(")[1]?.split(")")[0],
                     y=A.split("rotateY(")[1]?.split(")")[0],
                     z=A.split("rotateZ(")[1]?.split(")")[0],
-                    X="",Y="",Z="";
+                    X=0,Y=0,Z=0;
                     if(x && x?.indexOf("deg")>-1){X=parseFloat(x)}
                     if(y && y?.indexOf("deg")>-1){Y=parseFloat(y)}
                     if(z && z?.indexOf("deg")>-1){Z=parseFloat(z)}
@@ -611,7 +608,7 @@ E=function(e,nth=0){
             // 現在の要素の角度を取得
             nowdeg=E(e).gettransform().degz;
             if(rv==true){deg=nowdeg+deg}
-            absdeg=Math.abs(nowdeg-deg);
+            absdeg=Math.abs(nowdeg-deg)
             if(deg<nowdeg){rotmode=0}
             if(deg>nowdeg){rotmode=1}
             if(nowdeg==deg){rotmode=2}
@@ -634,36 +631,32 @@ E=function(e,nth=0){
             var ease = function(){
                 //進捗（0〜100%）を加算する。durationに指定したms分時間がかかる
                 now=performance.now()
-                progress=Math.max(0,Math.min(((now-begin)/duration*100),100));
+                progress=(now-begin)/duration*100;
+                m=Math.round((1.01-1/(progress*easefunc(progress/100)))*100000000)/100000000
 
                 if(rotmode==0){
                     //減算
-                    m=1-1/(progress*easefunc(progress/100))
                     bdeg=Math.min(nowdeg-(absdeg*m),nowdeg);
-                    console.log(bdeg);
-                    console.log(progress);
-
                 }else if(rotmode==1){
                     //加算
-                    m=1-1/(progress*easefunc(progress/100))
                     bdeg=Math.max(deg*m,nowdeg);
                 }else if(rotmode==3){
                 // 0度以下で逆時計周り
-                    m=1-1/(progress*easefunc(progress/100))
                     bdeg=Math.min(nowdeg,nowdeg+absdeg*m*-1);
+
                 }else if(rotmode==4){
                 // 回転先角度が0度以下で時計周り
-                    m=1-1/(progress*easefunc(progress/100))
                     bdeg=Math.max(nowdeg+absdeg*m,nowdeg);
                 }
 
                 e.style.setProperty("transform","rotateZ("+(bdeg)+"deg)")
                 //その要素のCSSカスタムプロパティの--fadeがtrueである場合は続行
 
-                if( e.style.getPropertyValue("--animations-rotatez")!="false" && progress<100){
+                if( e.style.getPropertyValue("--animations-rotatez")!="false" && progress<=100 ){
                     requestAnimationFrame(ease);
                 }else{
                     e.style.setProperty("--animations-rotatez","false")
+                    console.log(m);
                     setTimeout(function(){
                         e.style.setProperty("transform",e.style.getPropertyValue("--done-rotatez-value"));
                     },1)
