@@ -393,23 +393,29 @@ E=function(e,nth=0){
             e.style.setProperty("font-size",s)
             return E(e);
         },
-        getcolor:function(type){
+        getcolor:function(type="color"){
+            var X,Y=e.style.getPropertyValue(type),Z,R,G,B,A;
 
             type=type.toLowerCase()
-            if(type=="backgroundcolor"){type="background-Color"}
-            if(type=="color"){type="color"}
 
-            var A=window.getComputedStyle(e,"")[type].match(/\d+/g),
-                B=e.style.getPropertyValue(type),
-                C=B.match(/\d+/g);
-                if(B.indexOf("rgba")>-1 && C.length>3){
-                    return {r:A[0]|0,g:A[1]|0,b:A[2]|0,a:parseFloat(C[3]+"."+C[4])}
+            //各値の初期値を指定しておく
+            if(type=="background-color")    {R=255;G=255;B=255;A=1}
+            if(type=="color")               {R=0  ;G=0  ;B=0  ;A=1}
+
+            if(Y.length>0){
+                //指定したstyleのプロパティに何らかの値が指定されている場合取得する
+                X=window.getComputedStyle(e,"")[type].match(/\d+/g);
+                Z=Y.match(/\d+/g);
+                if(Y.indexOf("rgba")>-1 && Z.length>3){
+                    return {r:X[0]|0,g:X[1]|0,b:X[2]|0,a:parseFloat(Z[3]+"."+Z[4])}
                 }
-                return {r:A[0]|0,g:A[1]|0,b:A[2]|0,a:1}
+                return {r:X[0]|0,g:X[1]|0,b:X[2]|0,a:1}
+            }else{
+                //指定したstyleのプロパティが空白だった場合、初期値を代入する
+                return {r:R,g:G,b:B}
+            }
         },
-        getbcolor:function(){
-            return E(e).getcolor("background-color");
-        },
+        getbcolor:function(){return E(e).getcolor("background-color");},
         setcolor:function(type,colorB,easetype=0,duration=0){
             var cstr,colorA,diff={},r,g,b,a;
 
@@ -472,7 +478,7 @@ E=function(e,nth=0){
                     }
                 }
 
-            // 現在の要素の背景色を取得
+                // 現在の要素の背景色を取得
                 colorA=E(e).getcolor(type);
                 diff.r=colorA.r-colorB.r
                 diff.g=colorA.g-colorB.g
@@ -533,14 +539,13 @@ E=function(e,nth=0){
 
                 e.style.setProperty(type,"rgba("+r+","+g+","+b+","+a+")");
                 //その要素のCSSカスタムプロパティの--fadeがtrueである場合は続行
-                //完了
-                if( e.style.getPropertyValue("--animations-"+type)!="false" && progress>99){
+                if( e.style.getPropertyValue("--animations-"+type)!="false" && progress<100){
+                        requestAnimationFrame(ease);
+                }else{
                     e.style.setProperty("--animations-"+type,"false")
                     setTimeout(function(){
                         e.style.setProperty(type,e.style.getPropertyValue("--done-"+type+"-value"));
                     },1)
-                }else{
-                    requestAnimationFrame(ease);
                 }
 
             }
@@ -552,13 +557,129 @@ E=function(e,nth=0){
 
             return E(e);
         },
-        bcolor:function(colorB,easetype=0,duration=0){return E(e).setcolor("background-color",colorB,easetype,duration)},
-        fcolor:function(colorB,easetype=0,duration=0){return E(e).setcolor("color",colorB,easetype,duration)}
+        bcolor:function(colorB,easetype=0,duration=0){
+            if(e.style.getPropertyValue("background-color").length<1){
+                e.style.setProperty("background-color","#FFF");
+            }
+            return E(e).setcolor("background-color",colorB,easetype,duration)
+        },
+        fcolor:function(colorB,easetype=0,duration=0){
+            if(e.style.getPropertyValue("color").length<1){
+                e.style.setProperty("color","#000");
+            }
+            return E(e).setcolor("color",colorB,easetype,duration)
+        },
+        gettransform:function(){
+                var A=e.style.getPropertyValue("transform")
+                var p=A.split("perspective(")[1]?.split(")")[0]
+                    a=A.split("scaleX(")[1]?.split(")")[0],
+                    b=A.split("scaleY(")[1]?.split(")")[0],
+                    c=A.split("scaleZ(")[1]?.split(")")[0],
+                    e=A.split("translateX(")[1]?.split(")")[0],
+                    f=A.split("translateY(")[1]?.split(")")[0],
+                    g=A.split("translateZ(")[1]?.split(")")[0],
+                    v=A.split("skewX(")[1]?.split(")")[0],
+                    w=A.split("skeyY(")[1]?.split(")")[0],
+                    x=A.split("rotateX(")[1]?.split(")")[0],
+                    y=A.split("rotateY(")[1]?.split(")")[0],
+                    z=A.split("rotateZ(")[1]?.split(")")[0],
+                    X="",Y="",Z="";
+                    if(x && x?.indexOf("deg")>-1){X=parseFloat(x)}
+                    if(y && y?.indexOf("deg")>-1){Y=parseFloat(y)}
+                    if(z && z?.indexOf("deg")>-1){Z=parseFloat(z)}
+                return {
+                    perspective:p,
+                    rotatex:x,
+                    rotatey:y,
+                    rotatez:z,
+                    scalex:a,
+                    scaley:b,
+                    scalez:c,
+                    skewx:v,
+                    skewy:w,
+                    translatex:e,
+                    translatey:f,
+                    translatez:g,
+                    degx:X,
+                    degy:Y,
+                    degz:Z
+                };
+        },
+        rotatez:function(deg,rv=false,easetype=0,duration=0){
+           var cstr,colorA,diff={},nowdeg,rotmode=0,adsdeg,bdeg;
+
+            // 現在の要素の角度を取得
+            nowdeg=E(e).gettransform().degz;
+            if(rv==true){deg=nowdeg+deg}
+            absdeg=Math.abs(nowdeg-deg);
+            if(deg<nowdeg){rotmode=0}
+            if(deg>nowdeg){rotmode=1}
+            if(nowdeg==deg){rotmode=2}
+            if(deg<nowdeg && (deg<0)){rotmode=3}
+            if(deg>nowdeg && (nowdeg<0)){rotmode=4}
+            e.style.setProperty("--done-rotatez-value","rotateZ("+deg+"deg)");
+
+            var begin=performance.now(),easefunc,now,progress,m;
+
+            //イージングタイプによって処理を分ける
+            if(Number.isInteger(easetype)){
+                duration=easetype;
+                easefunc=E.easelist.linear
+            }else{
+                easefunc=E.easelist[easetype.toLowerCase()]
+            }
+
+            //回転する
+            e.style.setProperty("--animations-rotatez","true")
+            var ease = function(){
+                //進捗（0〜100%）を加算する。durationに指定したms分時間がかかる
+                now=performance.now()
+                progress=Math.max(0,Math.min(((now-begin)/duration*100),100));
+
+                if(rotmode==0){
+                    //減算
+                    m=1-1/(progress*easefunc(progress/100))
+                    bdeg=Math.min(nowdeg-(absdeg*m),nowdeg);
+                    console.log(bdeg);
+                    console.log(progress);
+
+                }else if(rotmode==1){
+                    //加算
+                    m=1-1/(progress*easefunc(progress/100))
+                    bdeg=Math.max(deg*m,nowdeg);
+                }else if(rotmode==3){
+                // 0度以下で逆時計周り
+                    m=1-1/(progress*easefunc(progress/100))
+                    bdeg=Math.min(nowdeg,nowdeg+absdeg*m*-1);
+                }else if(rotmode==4){
+                // 回転先角度が0度以下で時計周り
+                    m=1-1/(progress*easefunc(progress/100))
+                    bdeg=Math.max(nowdeg+absdeg*m,nowdeg);
+                }
+
+                e.style.setProperty("transform","rotateZ("+(bdeg)+"deg)")
+                //その要素のCSSカスタムプロパティの--fadeがtrueである場合は続行
+
+                if( e.style.getPropertyValue("--animations-rotatez")!="false" && progress<100){
+                    requestAnimationFrame(ease);
+                }else{
+                    e.style.setProperty("--animations-rotatez","false")
+                    setTimeout(function(){
+                        e.style.setProperty("transform",e.style.getPropertyValue("--done-rotatez-value"));
+                    },1)
+                }
+            }
+
+            //初回実行
+            requestAnimationFrame(ease);
+
+            //移動完了したタイミングで--fadeをfalseにしておく
+            return E(e);
+        }
     }
 }
 
 //現在の状態
-
 E.position="absolute"
 E.oldtarget="";
 E.result=0;
@@ -574,7 +695,7 @@ E.units="px";
 E.aspeed=0
 E.delay=0;
 
-//
+//色データ
 E.colorlist={
 //CSS3 Basic color keywords
 black       :{r:  0,g:  0,b:  0},
