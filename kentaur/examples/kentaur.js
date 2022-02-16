@@ -20,7 +20,6 @@ E=function(e,nth=0){
             }
         }
     }
-
     return {
         line:function(x1,y1,x2,y2,easetype=0,duration=0){
             var xA=x1,yA=y1;
@@ -72,7 +71,7 @@ E=function(e,nth=0){
                 //その要素のCSSカスタムプロパティの--make-lineがtrueである場合は続行
                 if(
                     progress<=100 &&
-                    c.style.getPropertyValue("--make-line")!="false"
+                    c.style.getPropertyValue("--make-line")=="true"
                 ){
                     requestAnimationFrame(ease)
                 }else{
@@ -301,7 +300,7 @@ E=function(e,nth=0){
                 //かつ、その要素のCSSカスタムプロパティの--moveがtrueである場合は続行
                 if(
                     (progress >= 0 && progress <= 100)
-                    && e.style.getPropertyValue("--move")!="false"
+                    && e.style.getPropertyValue("--move")=="true"
                 ){
                     requestAnimationFrame(move)
                 }else{
@@ -451,6 +450,7 @@ E=function(e,nth=0){
                             colorB.b=colorB.r;
                         }
 
+                        // 透明度
                         colorB.a=colorB.a || 1;
                     }
 
@@ -536,7 +536,7 @@ E=function(e,nth=0){
 
                 e.style.setProperty(type,"rgba("+r+","+g+","+b+","+a+")");
                 //その要素のCSSカスタムプロパティの--fadeがtrueである場合は続行
-                if( e.style.getPropertyValue("--animations-"+type)!="false" && progress<=100){
+                if( e.style.getPropertyValue("--animations-"+type)=="true" && progress<=100){
                         requestAnimationFrame(ease);
                 }else{
                     e.style.setProperty("--animations-"+type,"false")
@@ -652,7 +652,7 @@ E=function(e,nth=0){
                 e.style.setProperty("transform","rotateZ("+(bdeg)+"deg)")
                 //その要素のCSSカスタムプロパティの--fadeがtrueである場合は続行
 
-                if( e.style.getPropertyValue("--animations-rotatez")!="false" && progress<=100 ){
+                if( e.style.getPropertyValue("--animations-rotatez")=="true" && progress<=100 ){
                     requestAnimationFrame(ease);
                 }else{
                     e.style.setProperty("--animations-rotatez","false")
