@@ -25,9 +25,11 @@
 
     </div>
     <div class="col-10 functionguide"><h1>
-E()
+E
 </h1>
-<p>E(element)</p>
+<hr>
+<pre><code>E(element,nth)</code></pre>
+<h3>概要</h3>
 <table class="table table-striped">
 <thead>
 <tr class="header">
@@ -52,11 +54,11 @@ E()
 </tr>
 </tbody>
 </table>
-<p>E()は、Kentaur.jsにおけるHTMLから任意の要素を取得するためのセレクタです。CSSセレクタで取得したい要素を選択します。</p>
+<p>Eは、Kentaur.jsにおけるHTMLから任意の要素を取得するためのセレクタです。CSSセレクタで取得したい要素を選択します。また、Kentaur.jsで唯一のグローバルに追加されるオブジェクトでもあります。</p>
 <pre><code>E("body");
 E(document.body);
 E("div#target");
-E(".target",2)</code></pre>
+E(".target",2);</code></pre>
 <p>javascript標準の関数であるdocument.querySelectorAllと使い方はほとんど同じですが、返り値にはエレメントそのものではなく、kentaurの様々なメソッドを内包したオブジェクト、すなわち取得した要素の子要素として線を描画したり、取得した要素自体をアニメーション移動させるための様々な関数が渡されます。</p>
 </div>
 </div>

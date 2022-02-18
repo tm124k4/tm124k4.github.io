@@ -4,38 +4,32 @@
         <meta charset="utf-8">
         <title>move - Kentaur.js</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
-        <style>
-            *{
-                font-size:12pt;
-                line-height:1.5em;
-            }
-
-            pre{
-                background-color:#ddd!important;
-            }
-        </style>
-    </head>
-    <body>
-        <header>Kentaur.js - move</header>
-        <div class="row">
-            <div class="col-md-2">
-                <a href="e.html">E</a><br>
-                <hr>
+    <link href="css/style.css" rel="stylesheet">
+    </head><header><a href="index.html">Kentaur.js リファレンス</a></header>
+<div class="row">
+    <div class="col-2 linklist">
+        セレクタ<br>
+        <a href="e.html">E</a><br>
+        <hr>
+        図形<br>
         <a href="arc.html">arc</a><br>
-        <a href="bcolor.html">bcolor</a><br>
         <a href="box.html">box</a><br>
         <a href="delta.html">delta</a><br>
-        <a href="fadeout.html">fadeout</a><br>
         <a href="hex.html">hex</a><br>
         <a href="line.html">line</a><br>
+        移動<br>
         <a href="move.html">move</a><br>
-            </div>
-            <div class="col-md-9">
+        加工<br>
+        <a href="bcolor.html">bcolor</a><br>
+        <a href="fadeout.html">fadeout</a><br>
+
+    </div>
+    <div class="col-10 functionguide">
                 <h1 id="move">move</h1>
                 <hr>
+                <pre><code>move(x,y,easetype,speed)</pre></code>
                 <h3>概要</h3><br>
                 <p>E().move()は、E()で取得したHTMLエレメントを任意の2D座標に移動させるメソッドです。</p>
-                <pre><code>move(x,y,easetype,speed)</pre></code>
                 <table class="table table-striped">
                 <thead>
                 <tr class="header">
@@ -84,7 +78,8 @@
                 <pre><code>E(“div#target”).move(300,200);</pre></code>
                 <p>また、第3引数に整数値(ms)を入力することで、速度を指定したアニメーション移動も行う事ができます。以下の場合は3秒間かけて300,200の座標上に要素を移動する事となります。</p>
                 <pre><code>E(“div#target”).move(300,200,3000);</pre></code>
-                <p>（メモ）複数箇所を移動するアニメーションに関してはES2016で実装されたasync/await機能を利用することで実装可能です。以下は実装例となります。（<a href="../examples/example_move.html">サンプルページ</a>）</p>
+                <p>（メモ）複数箇所を移動するアニメーションに関してはES2016で実装されたasync/await機能を利用することで実装可能です。以下は実装例となります。</p>
+                <p><a class="btn" href="../examples/example_move.html">サンプルを見る</a></p>
                 <pre><code>
     function wait(ms){
         return new Promise(r=>setTimeout(r,ms));
@@ -135,7 +130,8 @@
         outelastic  
         inoutelastic
                 </code></pre>
-                <p>イージングを指定した場合のサンプルコードは以下のようになります。（<a href="../examples/example_move_2.html">サンプルページ</a>）</p>
+                <p>イージングを指定した場合のサンプルコードは以下のようになります。</p>
+                <p><a class="btn" href="../examples/example_move_2.html">サンプルを見る</a></p>
                 <pre><code>
         function wait(ms){
             return new Promise(r=>setTimeout(r,ms));

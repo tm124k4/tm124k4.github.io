@@ -30,11 +30,11 @@ header a:hover{
 .functionguide{
     padding-left: 30px;
 }
-.linklist a{
+.linklist a, .functionguide a.url{
     font-size:12pt;
     color:#777;
 }
-.linklist a:hover{color:#333}
+.linklist a:hover, .functionguide a.url:hover{color:#333}
 
 .row{
     width:100%
