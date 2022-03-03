@@ -436,7 +436,7 @@ E=function(e,nth=0){
                         }
 
                         // #RGB
-                        else if(colorstr.length==4){
+                        else if(cstr.length==4){
                             colorB.r=Math.min(parseInt(cstr.substring(1,2),16)*16,255);
                             colorB.g=Math.min(parseInt(cstr.substring(2,3),16)*16,255);
                             colorB.b=Math.min(parseInt(cstr.substring(3,4),16)*16,255);

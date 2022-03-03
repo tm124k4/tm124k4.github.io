@@ -18,11 +18,11 @@ z-index:500;
 
 div.hoverdiv{
 position:fixed;
-color:black;
+color:white;
 left:0px;
 top:0px;
 opacity:0;
-background-color:rgba(0,0,0,0.5);
+background-color:rgba(255,255,255,0.25);
 width:100%;
 padding-top:10px;
 padding-left:30px;
@@ -46,6 +46,7 @@ function wait(ms){
     return new Promise(r=>setTimeout(r,ms));
 }
 async function main(){
+    E("body").bcolor("#000")
     E.position="fixed";
     var randomA,randomB,start,x1=0,x2=0,y1=0,y2=0;
     while(true){
@@ -53,15 +54,15 @@ async function main(){
     console.log(rnd(0,4));
         switch(rnd(0,4)){
             case 0:
-                x1="00%";
-                x2="100%";
+                x1="-20%";
+                x2="120%";
                 y1=rnd(0,100)+"%";
                 y2=rnd(0,100)+"%";
             break;
 
             case 1:
-                x1="100%";
-                x2="0%";
+                x1="120%";
+                x2="-20%";
                 y1=rnd(0,100)+"%";
                 y2=rnd(0,100)+"%";
             break;
@@ -69,22 +70,23 @@ async function main(){
             case 2:
                 x1=rnd(0,100)+"%";
                 x2=rnd(0,100)+"%";
-                y1="0%";
-                y2="100%";
+                y1="-20%";
+                y2="120%";
             break;
 
             case 3:
                 x1=rnd(0,100)+"%";
                 x2=rnd(0,100)+"%";
-                y1="100%";
-                y2="0%";
+                y1="120%";
+                y2="-20%";
             break;
 
             default:
             break;
         }
 
-        console.log(""+x1+""+y1+""+x2+""+y2)
+        //console.log(""+x1+""+y1+""+x2+""+y2)
+        E.width=rnd(15,60);
         E("body")
             .line(x1,y1,x2,y2,"outsine",1000)
             .bcolor({
@@ -93,9 +95,10 @@ async function main(){
                 b:rnd(0,255),
                 a:rnd(0,255)
             })
+            .border("top",rnd(15,30)+"px","solid","rgba("+rnd(0,255)+","+rnd(0,255)+","+rnd(0,255)+",5)")
             .fadeout("outsine",3000)
             .remove(3000)
-        await wait(100)
+        await wait(133)
     }
 }  
 window.onload=main;
