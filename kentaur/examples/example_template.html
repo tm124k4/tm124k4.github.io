@@ -11,7 +11,7 @@ margin-right:10px;
 span.title{
 position:fixed;
 left:200px;
-top:22%;
+top:20%;
 z-index:500;
 }
 
@@ -36,77 +36,17 @@ opacity:1;
     </style>
     <script src="kentaur.js"></script>
     <script>
-        function rnd(min,max){
-            min=min|0;
-            max=max|0;
-            return Math.floor(Math.random()*(max-min)+min);
-        }
-        function wait(ms){
-            return new Promise(r=>setTimeout(r,ms));
-        }
+    function main(){
+    E("body").box(100,100,500,200);
+    }
 
-        function animationA(){
-                 E(".box",0).bcolor({
-                    r:rnd(0,255),
-                    g:rnd(0,255),
-                    b:rnd(0,255),
-                    a:1
-                    },"inoutquad",3000)
-
-                E(".box",1).bcolor({
-                    r:rnd(0,255),
-                    g:rnd(0,255),
-                    b:rnd(0,255),
-                    a:1
-                    },"inoutquad",3000)
-
-                E(".box",2).bcolor({
-                    r:rnd(0,255),
-                    g:rnd(0,255),
-                    b:rnd(0,255),
-                    a:Math.random()
-                    },"inoutquad",3000)
-
-
-                E("body").fcolor({
-                    r:rnd(0,255),
-                    g:rnd(0,255),
-                    b:rnd(0,255),
-                    a:Math.random()
-                },"inoutquad",3000)
-
-        }
-        function animationB(){
-                E("body").bcolor({
-                    r:rnd(0,255),
-                    g:rnd(0,255),
-                    b:rnd(0,255),
-                    a:0.5
-                },"inoutquad",6000)
-        }
-
-        async function main(){
-            E("body").fontsize("30pt")
-            E.position="fixed"
-            E("body").box("25%","25%","75%",60 ).border("right","0px");
-            E("body").box("0%","60%","100%",120).border("left","0px").border("right","0px");
-            E("body").box("50%","0%",180,"100%").border("top" ,"0px").border("bottom","0px");
-
-            while(true){
-                await wait(3500)
-                    animationA();
-                    animationB();
-                await wait(3500)
-                    animationA();
-            }
-        }       
-        window.onload=main;
-        </script>
+    window.onload=main;
+    </script>
     </head>
     <body>
-<span class="title">setcolor example</span>
+<span class="title">example template</span>
 <div class="hoverdiv">
-Kentaur.js example: bcolor(), fcolor()<br>
+Kentaur.js example: template<br>
 <a href="https://tamisaka.github.io/kentaur/doc/bcolor.html" class="btn btn-primary"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-earmark-text-fill" viewBox="0 0 16 16">
   <path d="M9.293 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.707A1 1 0 0 0 13.707 4L10 .293A1 1 0 0 0 9.293 0zM9.5 3.5v-2l3 3h-2a1 1 0 0 1-1-1zM4.5 9a.5.5 0 0 1 0-1h7a.5.5 0 0 1 0 1h-7zM4 10.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm.5 2.5a.5.5 0 0 1 0-1h4a.5.5 0 0 1 0 1h-4z"/>
 </svg>リファレンスへ</a>
@@ -117,3 +57,4 @@ Kentaur.js example: bcolor(), fcolor()<br>
 </div>
     </body>
 </html>
+
