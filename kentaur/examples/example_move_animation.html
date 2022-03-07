@@ -8,7 +8,7 @@
         }
         async function main(){
             E.position="fixed";
-            for(var p=0;p<360;p++){
+            for(var p=0;p<60;p++){
                 E("body").arc(30,30,16,16);
             }
             var y=0;
@@ -16,14 +16,14 @@
             while(true){
                 await wait(2000);
                 for(y=0;y<6;y++){
-                    for(p=0;p<60;p++){
-                        E(".arc",p+(y*60)).move(30+(p+1)*100,30+(y+1)*100,"inoutcubic",1000);
+                    for(p=0;p<10;p++){
+                        E(".arc",p+(y*10)).move(30+(p+1)*100,30+(y+1)*100,"inoutcubic",1000);
                     }
                 }
                 await wait(2000);
                 for(y=0;y<6;y++){
-                    for(p=0;p<60;p++){
-                        E(".arc",p+(y*60)).move(30,30,"inoutcubic",1000);
+                    for(p=0;p<10;p++){
+                        E(".arc",p+(y*10)).move(30,30,"inoutcubic",1000);
                     }
                 }
                 await wait(2000);

@@ -1,0 +1,46 @@
+<html>
+    <head>
+    <meta charset="utf-8">
+    <script src="kentaur.js"></script>
+    <script>
+        function wait(ms){
+            return new Promise(r=>setTimeout(r,ms));
+        }
+        async function main(){
+            E.position="fixed";
+            E("body").bcolor("black");
+
+
+            var y=0;
+
+            while(true){
+                E("body")
+                    .span("E('body').arc(300,300,50,50).fadein(500)","code")
+                        .fcolor("white")
+                        .move(100,500)
+                        .fadein(3000);
+                await wait(3000);
+
+                E("body").arc(300,300,50,50).fadein(500);
+                await wait(5000);
+
+                E(".code").fadeout(1000);
+                await wait(5000);
+
+                E(".code").html("E('.arc').move(600,250,'outincirc',3000)");
+                E(".code").fadein(1000);
+                await wait(1000);
+
+                E(".arc").move(600,250,'inoutcirc',3000);
+
+                await wait(10000);
+                E("body").dom().innerHTML="";
+            }
+        }
+        window.onload=main;
+        </script>
+    </head>
+    <body>
+
+    </body>
+</html>

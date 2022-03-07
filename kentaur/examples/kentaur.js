@@ -41,7 +41,7 @@ E=function(e,nth=0){
                 position:${E.position};
                 left:${xA};
                 top:${yA};
-                height:${E.width}${E.units};
+                height:${E.width}${E.units.size};
                 transform:rotate(${d}deg);
                 background-color:${E.fcolor}
             `
@@ -86,10 +86,10 @@ E=function(e,nth=0){
         },
         box:function(x,y,w,h){
             var c=document.createElement("span");
-            if(typeof x!=="string"){x=x+E.units}
-            if(typeof y!=="string"){y=y+E.units}
-            if(typeof w!=="string"){w=w+E.units}
-            if(typeof h!=="string"){h=h+E.units}
+            if(typeof x!=="string"){x=x+E.units.pos}
+            if(typeof y!=="string"){y=y+E.units.pos}
+            if(typeof w!=="string"){w=w+E.units.size}
+            if(typeof h!=="string"){h=h+E.units.size}
 
             c.style=`
                 transform-origin:50% 50%;
@@ -107,10 +107,10 @@ E=function(e,nth=0){
         },
         arc:function(x,y,w,h){
             var c=document.createElement("span");
-            if(typeof x!=="string"){x=x+E.units}
-            if(typeof y!=="string"){y=y+E.units}
-            if(typeof w!=="string"){w=w+E.units}
-            if(typeof h!=="string"){h=h+E.units}
+            if(typeof x!=="string"){x=x+E.units.pos}
+            if(typeof y!=="string"){y=y+E.units.pos}
+            if(typeof w!=="string"){w=w+E.units.size}
+            if(typeof h!=="string"){h=h+E.units.size}
 
             c.style=`
                 transform-origin:50% 50%;
@@ -130,10 +130,10 @@ E=function(e,nth=0){
         hex:function(x,y,w=E.w,h){
             var c=document.createElement("span");
             if(h===void 0){h=w};
-            if(typeof x!=="string"){x=x+E.units}
-            if(typeof y!=="string"){y=y+E.units}
-            if(typeof w!=="string"){w=w+E.units}
-            if(typeof h!=="string"){h=h+E.units}
+            if(typeof x!=="string"){x=x+E.units.pos}
+            if(typeof y!=="string"){y=y+E.units.pos}
+            if(typeof w!=="string"){w=w+E.units.size}
+            if(typeof h!=="string"){h=h+E.units.size}
             c.style=`
                 transform-origin:50% 50%;
                 position:${E.position};
@@ -151,10 +151,10 @@ E=function(e,nth=0){
         delta:function(x,y,w=E.w,h,d=0){
             var c=document.createElement("span");
             if(h===void 0){h=w};
-            if(typeof x!=="string"){x=x+E.units}
-            if(typeof y!=="string"){y=y+E.units}
-            if(typeof w!=="string"){w=w+E.units}
-            if(typeof h!=="string"){h=h+E.units}
+            if(typeof x!=="string"){x=x+E.units.pos}
+            if(typeof y!=="string"){y=y+E.units.pos}
+            if(typeof w!=="string"){w=w+E.units.size}
+            if(typeof h!=="string"){h=h+E.units.size}
             c.style=`
                 transform-origin:50% 50%;
                 position:${E.position};
@@ -199,11 +199,10 @@ E=function(e,nth=0){
          * @returns 
          */
         piechart:function(a,b,x,y,w,h,c1="blue",c2="red"){
-            if(typeof x!=="string"){x=x+E.units}
-            if(typeof y!=="string"){y=y+E.units}
-            if(typeof w!=="string"){w=w+E.units}
-            if(typeof h!=="string"){h=h+E.units}
-
+            if(typeof x!=="string"){x=x+E.units.pos}
+            if(typeof y!=="string"){y=y+E.units.pos}
+            if(typeof w!=="string"){w=w+E.units.size}
+            if(typeof h!=="string"){h=h+E.units.size}
             var c=document.createElement("span")
             p,trans="";
             if(a>b){
@@ -255,15 +254,14 @@ E=function(e,nth=0){
             ax=b.x,ay=b.y,
             px=ax,py=ay,
             progress,
+            dx=Math.abs(ax-x),dy=Math.abs(ay-y),
             ox=ax-x,oy=ay-y,begin=Date.now(),
             xreverse=1,yreverse=1,easefunc,now;
 
-            //現在座標より指定座標が上もしくは左の場合、その軸の進捗を逆転する
-            if(x<ax){xreverse=-1;gx=100}
-            if(y<ay){yreverse=-1;gy=100}
-            //同じ軸同士の現在座標と指定座標が同じだった場合、その軸は進捗を停止する
-            if(x==ax){xreverse=0;gx=100}
-            if(y==ay){yreverse=0;gy=100}
+            e.style.setProperty("position",E.position);
+            //現在座標より指定座標が上もしくは左の場合、その軸の移動方向を逆転する
+            if(x<ax){xreverse=-1;}
+            if(y<ay){yreverse=-1;}
 
             //イージングタイプによって処理を分ける
             if(Number.isInteger(easetype)){
@@ -272,48 +270,51 @@ E=function(e,nth=0){
             }else{
                 easefunc=E.easelist[easetype.toLowerCase()]
             }
-            
-            //移動する
-            e.style.setProperty("--move","true")
-            var move = function(){
 
-                //進捗（0〜100%）を加算する。durationに指定したms分時間がかかる
-                now=Date.now()
-                progress=(now-begin)/duration*100
+            if(duration>0){
+                //移動する
+                e.style.setProperty("--move","true")
+                var move = function(){
+                    //進捗（0〜100%）を加算する。durationに指定したms分時間がかかる
+                    now=Date.now()
+                    progress=(now-begin)/duration*100
 
-                //進捗に応じて実際に要素を移動
-                //移動元が移動先より手前にある場合、現在位置に対して減算する
-                if(xreverse>0){
-                    px = x * easefunc(progress / 100) + ax;
-                }else{
-                    px = ax - ox * easefunc(progress / 100);
+                    //進捗に応じて実際に要素を移動
+                    //移動元が移動先より手前にある場合、現在位置に対して減算する
+                    if(xreverse>0){
+                        px = ax + dx * easefunc(progress / 100);
+                    }else{
+                        px = ax - dx * easefunc(progress / 100);
+                    }
+                    if(yreverse>0){
+                        py = ay + dy * easefunc(progress / 100) ;
+                    }else{
+                        py = ay - dy * easefunc(progress / 100)
+                    }
+
+                    E._move(e,px,py);
+                    //console.log(progress);
+
+                    //アニメーションが完了していない場合
+                    //かつ、その要素のCSSカスタムプロパティの--moveがtrueである場合は続行
+                    if(
+                        progress <= 100
+                        && e.style.getPropertyValue("--move")=="true"
+                    ){
+                        requestAnimationFrame(move)
+                    }else{
+                        //アニメーション完了時
+                        e.style.setProperty("--move","false")
+
+                        E._move(e,x,y)
+                    }
                 }
-                if(yreverse>0){
-                    py = y * easefunc(progress / 100) + ay;
-                }else{
-                    py = ay - oy * easefunc(progress / 100) 
-                }
-                e.style.left=px+"px"
-                e.style.top=py+"px"
-                console.log(progress);
-                //アニメーションが完了していない場合
-                //かつ、その要素のCSSカスタムプロパティの--moveがtrueである場合は続行
-                if(
-                    (progress >= 0 && progress <= 100)
-                    && e.style.getPropertyValue("--move")=="true"
-                ){
-                    requestAnimationFrame(move)
-                }else{
-                    //アニメーション完了時
-                    e.style.setProperty("--move","false")
-                }
-                
+                //初回実行
+                requestAnimationFrame(move);
+            }else{
+                //アニメーションさせない場合、即時に指定座標へ移動させる
+                E._move(e,x,y);
             }
-        
-            //初回実行
-            requestAnimationFrame(move);
-            
-            //移動完了したタイミングで--moveをfalseにしておく
             return E(e);
         },
         fadeout:function(easetype=0,duration=0,reverse=false){
@@ -371,8 +372,8 @@ E=function(e,nth=0){
         dom:function(){
             return e;
         },
-        span:function(cname){
-            return E(e).make("span","","")
+        span:function(inner,cname){
+            return E(e).make("span",inner,cname)
         },
         text:function(str){
             e.textContent=str;
@@ -675,10 +676,18 @@ E=function(e,nth=0){
     }
 }
 
-E._border=function(target,pos,size="1px",style="solid",color="#000"){
-    target.style.setProperty("border-"+pos+"-style",style);    target.style.setProperty("border-"+pos+"-width",size);
-    target.style.setProperty("border-"+pos+"-color",color);
-    return target;
+E._move=function(elm,x,y){
+    console.log(x+""+E.units.pos);
+    elm.style.left=x+E.units.pos;
+    elm.style.setProperty("left",x+E.units.pos)
+    elm.style.setProperty("top",y+E.units.pos)
+    return elm
+}
+E._border=function(elm,pos,size="1px",style="solid",color="#000"){
+    elm.style.setProperty("border-"+pos+"-style",style);
+    elm.style.setProperty("border-"+pos+"-width",size);
+    elm.style.setProperty("border-"+pos+"-color",color);
+    return elm;
 }
 
 //現在の状態
@@ -693,7 +702,9 @@ E.y=0;
 E.width=10;
 E.height=0;
 E.bwidth=10;
-E.units="px";
+E.units={}
+    E.units.pos="px";
+    E.units.size="px";
 E.aspeed=0
 E.delay=0;
 
