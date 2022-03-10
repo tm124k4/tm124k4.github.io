@@ -23,13 +23,14 @@ E=function(e,nth=0){
     return {
         line:function(x1,y1,x2,y2,easetype=0,duration=0){
             var xA=x1,yA=y1;
-            if(typeof x1==="string"){if(x1.indexOf("%")>-1){x1=window.innerWidth  * (parseInt(x1.split("%")[0]) / 100)}}
-            if(typeof y1==="string"){if(y1.indexOf("%")>-1){y1=window.innerHeight * (parseInt(y1.split("%")[0]) / 100)}}
-            if(typeof x2==="string"){if(x2.indexOf("%")>-1){x2=window.innerWidth  * (parseInt(x2.split("%")[0]) / 100)}}
-            if(typeof y2==="string"){if(y2.indexOf("%")>-1){y2=window.innerHeight * (parseInt(y2.split("%")[0]) / 100)}}
 
-            if(typeof xA!=="string"){xA=x1+E.units}
-            if(typeof yA!=="string"){yA=y1+E.units}
+            //パーセント表記の場合変換
+            x1=E._ifpt2x(x1).x;
+            y1=E._ifpt2y(y1).y;
+            x2=E._ifpt2x(x2).x;
+            y2=E._ifpt2y(y2).y;
+            if(typeof xA!=="string"){xA=x1+E.units.size}
+            if(typeof yA!=="string"){yA=y1+E.units.size}
 
             var c=document.createElement("span"),
             l=Math.hypot(y2-y1,x2-x1),
@@ -65,8 +66,8 @@ E=function(e,nth=0){
                 now=performance.now()
                 progress=(now-begin)/duration*100;
 
-                    //フェードイン
-                    c.style.width = l*(1-1/(progress*easefunc(progress/100))) + E.units;
+                    //線を伸ばす
+                    c.style.width = l*(1-1/(progress*easefunc(progress/100))) + E.units.size;
 
                 //その要素のCSSカスタムプロパティの--make-lineがtrueである場合は続行
                 if(
@@ -250,14 +251,34 @@ E=function(e,nth=0){
             return E(c);
         },
         move:function(x,y,easetype="linear",duration=0){
+
+            //パーセント表記かどうかを計算する
+            var ix=x,iy=y;
+            //%指定されている場合変換
+            x=E._ifpt2x(x);
+            y=E._ifpt2y(y);
+            //パーセント表記かどうか
+            var ispercent={x:x.ispercent,y:y.ispercent,pcx:ix,pcy:iy};                        x=x.x;y=y.y;
+
+            //現在の座標を取得
             var b=e.getBoundingClientRect(),
             ax=b.x,ay=b.y,
+            //移動中の座標用変数
             px=ax,py=ay,
-            progress,
+            //移動すべき距離の絶対値
             dx=Math.abs(ax-x),dy=Math.abs(ay-y),
-            ox=ax-x,oy=ay-y,begin=Date.now(),
-            xreverse=1,yreverse=1,easefunc,now;
+            //進捗
+            progress,
+            //開始時間
+            begin=Date.now(),
+            //軸移動方向反転
+            xreverse=1,yreverse=1,
+            //イージング関数代入用
+            easefunc,
+            //現在時間
+            now;
 
+            //positionを設定する
             e.style.setProperty("position",E.position);
             //現在座標より指定座標が上もしくは左の場合、その軸の移動方向を逆転する
             if(x<ax){xreverse=-1;}
@@ -265,9 +286,11 @@ E=function(e,nth=0){
 
             //イージングタイプによって処理を分ける
             if(Number.isInteger(easetype)){
+                //数値が代入されている場合はlinearの移動として扱う
                 duration=easetype;
                 easefunc=E.easelist.linear
             }else{
+                //easelistから参照
                 easefunc=E.easelist[easetype.toLowerCase()]
             }
 
@@ -292,8 +315,8 @@ E=function(e,nth=0){
                         py = ay - dy * easefunc(progress / 100)
                     }
 
+                    //現在位置を移動
                     E._move(e,px,py);
-                    //console.log(progress);
 
                     //アニメーションが完了していない場合
                     //かつ、その要素のCSSカスタムプロパティの--moveがtrueである場合は続行
@@ -305,7 +328,8 @@ E=function(e,nth=0){
                     }else{
                         //アニメーション完了時
                         e.style.setProperty("--move","false")
-
+                        if(ispercent.x===true){x=ispercent.pcx}
+                        if(ispercent.y===true){y=ispercent.pcy}
                         E._move(e,x,y)
                     }
                 }
@@ -313,7 +337,11 @@ E=function(e,nth=0){
                 requestAnimationFrame(move);
             }else{
                 //アニメーションさせない場合、即時に指定座標へ移動させる
+                if(ispercent.x==true){x=ispercent.pcx}
+                if(ispercent.y==true){y=ispercent.pcy}
                 E._move(e,x,y);
+
+
             }
             return E(e);
         },
@@ -672,21 +700,53 @@ E=function(e,nth=0){
         },
         border:function(pos,size,linetype,color){
             return E(E._border(e,pos,size,linetype,color))
+        },
+        fontfamily:function(f){
+            return E(E._fontfamily(e,f))
         }
     }
 }
 
+//パーセント表記変換用
+E._ifpt2x=function(x){
+    var p=false;
+    if(typeof x==="string"){
+        if(x.indexOf("%")>-1){
+            x=window.innerWidth  * (parseInt(x.split("%")[0]) / 100);
+            p=true;
+        }
+    }
+    return {x:x,ispercent:p}
+}
+E._ifpt2y=function(y){
+    var p=false;
+    if(typeof y==="string"){
+        if(y.indexOf("%")>-1){
+            y=window.innerHeight  * (parseInt(y.split("%")[0]) / 100)
+            p=true;
+        }
+    }
+    return {y:y,ispercent:p}
+}
+
+//即時移動
 E._move=function(elm,x,y){
-    console.log(x+""+E.units.pos);
-    elm.style.left=x+E.units.pos;
-    elm.style.setProperty("left",x+E.units.pos)
-    elm.style.setProperty("top",y+E.units.pos)
+    if(typeof x!=="string"){elm.style.left=x+E.units.pos}else{elm.style.setProperty("left",x)}
+    if(typeof y!=="string"){elm.style.top=y+E.units.pos}else{elm.style.setProperty("top",y)}
     return elm
 }
+
+//border設定用
 E._border=function(elm,pos,size="1px",style="solid",color="#000"){
     elm.style.setProperty("border-"+pos+"-style",style);
     elm.style.setProperty("border-"+pos+"-width",size);
     elm.style.setProperty("border-"+pos+"-color",color);
+    return elm;
+}
+
+//
+E._fontfamily=function(elm,f){
+    elm.style.setProperty("font-family",f);
     return elm;
 }
 
@@ -702,9 +762,10 @@ E.y=0;
 E.width=10;
 E.height=0;
 E.bwidth=10;
-E.units={}
-    E.units.pos="px";
-    E.units.size="px";
+E.units={
+    pos:"px",
+    size:"px"
+}
 E.aspeed=0
 E.delay=0;
 
