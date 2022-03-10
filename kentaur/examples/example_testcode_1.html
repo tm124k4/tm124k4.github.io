@@ -11,8 +11,9 @@ margin-right:10px;
 }
 span.title{
 position:fixed;
-left:200px;
-top:20%;
+color:rgba(255,255,255,0.3);
+left:5%;
+top:5%;
 z-index:500;
 }
 
@@ -48,13 +49,13 @@ opacity:1;
 
             while(true){
 
-                E("body").span("//code:","desc")
+                E(".spanbody").span("//code:","desc")
                     .fontfamily(fontfamily)
                     .fcolor("white")
                     .move("5%","87%")
                     .fadein(3000);
 
-                E("body")
+                E(".spanbody")
                     .span("E('body').arc(300,300,50,50).fadein(1500);","code")
                         .fontfamily(fontfamily)
                         .fontsize("24pt")
@@ -63,7 +64,7 @@ opacity:1;
                         .fadein(3000);
                 await wait(3000);
 
-                E("body").arc(300,300,50,50).fadein(1500);
+                E(".spanbody").arc(300,300,50,50).fadein(1500);
                 await wait(5000);
 
                 E(".code").fadeout(1000);
@@ -93,7 +94,7 @@ opacity:1;
                 E(".code").fadein(1000);
                 await wait(1000);
 
-                E("body").line(100,100,1000,300,"inoutcirc",3000)
+                E(".spanbody").line(100,100,1000,300,"inoutcirc",3000)
                 .bcolor("lightgreen");
                 await wait(5000);
 
@@ -107,14 +108,15 @@ opacity:1;
                 E(".code").fadeout(1000);
                 await wait(5000);
 
-                E("body").html("");
+                E(".spanbody").html("");
             }
         }
         window.onload=main;
         </script>
     </head>
     <body>
-<span class="title">setcolor example</span>
+<span class="title">Kentaur example</span>
+<span class="spanbody"></span>
 <div class="hoverdiv">
 Kentaur.js example: testcode_1<br>
 <a href="https://tamisaka.github.io/kentaur/doc/" class="btn btn-primary"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-earmark-text-fill" viewBox="0 0 16 16">
