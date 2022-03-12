@@ -258,7 +258,8 @@ E=function(e,nth=0){
             x=E._ifpt2x(x);
             y=E._ifpt2y(y);
             //パーセント表記かどうか
-            var ispercent={x:x.ispercent,y:y.ispercent,pcx:ix,pcy:iy};                        x=x.x;y=y.y;
+            var ispercent={x:x.ispercent,y:y.ispercent,pcx:ix,pcy:iy}
+            x=x.x;y=y.y;
 
             //現在の座標を取得
             var b=e.getBoundingClientRect(),
@@ -310,9 +311,9 @@ E=function(e,nth=0){
                         px = ax - dx * easefunc(progress / 100);
                     }
                     if(yreverse>0){
-                        py = ay + dy * easefunc(progress / 100) ;
+                        py = ay + dy * easefunc(progress / 100);
                     }else{
-                        py = ay - dy * easefunc(progress / 100)
+                        py = ay - dy * easefunc(progress / 100);
                     }
 
                     //現在位置を移動
@@ -340,8 +341,6 @@ E=function(e,nth=0){
                 if(ispercent.x==true){x=ispercent.pcx}
                 if(ispercent.y==true){y=ispercent.pcy}
                 E._move(e,x,y);
-
-
             }
             return E(e);
         },
@@ -365,7 +364,7 @@ E=function(e,nth=0){
                 //reverseがtrueならフェードを逆転させる
                 if(reverse){
                     //フェードイン
-                    e.style.opacity = 1-1/(progress*easefunc(progress/100));
+                    e.style.opacity = 1*easefunc(progress/100);
                 }else{
                     //フェードアウト
                     e.style.opacity = 1/(progress*easefunc(progress/100));
@@ -580,7 +579,6 @@ E=function(e,nth=0){
             requestAnimationFrame(ease);
 
             //移動完了したタイミングで--fadeをfalseにしておく
-
             return E(e);
         },
         bcolor:function(colorB,easetype=0,duration=0){
@@ -695,7 +693,6 @@ E=function(e,nth=0){
             //初回実行
             requestAnimationFrame(ease);
 
-            //移動完了したタイミングで--fadeをfalseにしておく
             return E(e);
         },
         border:function(pos,size,linetype,color){
