@@ -1,7 +1,7 @@
 /** kentaur.js
- *  (c)2021-2022 Takahiro Misaka
+ *  (c)2021-2024 Takahiro Misaka
  *  Released under the MIT license.
- *  https://github.com/tamisaka/kentaur/
+ *  https://github.com/tm124k4/kentaur/
  */
 
 

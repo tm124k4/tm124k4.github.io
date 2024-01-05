@@ -1,0 +1,10 @@
+.p-footer{
+  background:#ffd5d5;
+  font-size:12px;
+}
+
+.p-footer-nav__author{
+  position:absolute;
+  bottom:10px;
+  right:10px;  
+}

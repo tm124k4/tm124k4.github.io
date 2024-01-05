@@ -1,11 +1,14 @@
 <!DOCTYPE html>
 <html lang='ja'>
-    <head>
-        <meta charset="utf-8">
-        <title>line - Kentaur.js</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
-    <link href="css/style.css" rel="stylesheet">
-    </head><header><a href="index.html">Kentaur.js リファレンス</a></header>
+<head>
+<meta charset="utf-8">
+<title>line - Kentaur.js</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+<link href="css/style.css" rel="stylesheet">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+</head>
+<body>
+<header><a href="index.html">Kentaur.js リファレンス</a></header>
 <div class="row">
     <div class="col-2 linklist">
         セレクタ<br>
@@ -96,12 +99,12 @@
                 <p>しかし、canvasでは一度描画した図形のみを後から変形することはできず、画面を再描画する事によって実現されます。SVGでは後からDOM操作も可能ですが、親となるsvgタグと合わせて少なくとも2つ以上のタグが必要となります。</p>
                 <p>Kentaur.jsではspanのstyle属性下に対して必要なCSSスタイルを適用するので、単一のspanタグによって描画することができます。すなわち、以下の通りに書くことができます。</p>
                 <pre><code>E(“div#kentaur1”).line(100,50,200,250);</code></pre>
-                <p>また、第5引数に整数値(ms)を入力することで、始点から伸びていくようなアニメーションを伴って生成させることもできます。</p><a href="https://tamisaka.github.io/kentaur/examples/example_line.html" class="btn">サンプルを見る</a>
+                <p>また、第5引数に整数値(ms)を入力することで、始点から伸びていくようなアニメーションを伴って生成させることもできます。</p><a href="../examples/example_line.html" class="btn">サンプルを見る</a>
             </p>
                 <pre><code>E(“div#kentaur1”).line(0,0,1000,700,3000);</code></pre>
                 <p>もちろん、描画されたものはspanタグそのものであり、後からこのspanタグに対してDOM操作を行い、変形させたり色を変更する事も可能です。</p>
                 <p>座標の指定はパーセンテージでの指定も可能ですが、線の長さは現在のウィンドウの解像度（画面サイズ）に基づいて計算された数値が設定されます。</p>
-                <a href="https://tamisaka.github.io/kentaur/examples/example_line_animation.html" class="btn">サンプルを見る</a>
+                <a href="../examples/example_line_animation.html" class="btn">サンプルを見る</a>
             </div>
         </div>
     <footer>Kentaur.js Docs<br>(C)2021-2022 Takahiro Misaka</footer>
