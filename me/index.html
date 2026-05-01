@@ -1,0 +1,1763 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Single-file Markdown Editor (GFM-ish + TOC DnD)</title>
+  <style>
+    :root { --bg:#0b0d10; --panel:#12161b; --text:#e8eef6; --muted:#9aa7b5; --border:#223041; --accent:#4ea1ff; }
+    * { box-sizing:border-box; }
+
+    /* scrollbar (dark) */
+    * { scrollbar-width: thin; scrollbar-color: #2f4661 #0f1318; }
+    *::-webkit-scrollbar { width: 10px; height: 10px; }
+    *::-webkit-scrollbar-track { background: #0f1318; border-radius: 999px; }
+    *::-webkit-scrollbar-thumb { background: #2f4661; border-radius: 999px; border: 2px solid #0f1318; }
+    *::-webkit-scrollbar-thumb:hover { background: #3c5c80; }
+
+    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans JP", sans-serif; background:var(--bg); color:var(--text); }
+
+    header { height:56px; padding:10px 12px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; }
+    header .title { font-size:13px; color:var(--muted); font-weight:600; letter-spacing:.02em; }
+    header .spacer { flex:1; }
+
+    button { background:var(--panel); color:var(--text); border:1px solid var(--border); border-radius:10px; padding:8px 10px; cursor:pointer; font-size:13px; }
+    button:hover { border-color:#2f4661; }
+    button.primary { border-color: var(--accent); }
+
+    main { height: calc(100vh - 56px); display:grid; grid-template-columns: 260px 1fr; gap:12px; padding:12px; }
+
+    .pane { background:var(--panel); border:1px solid var(--border); border-radius:16px; overflow:hidden; min-height:0; display:flex; flex-direction:column; }
+    .pane-title { padding:10px 12px; font-size:12px; color:var(--muted); border-bottom:1px solid var(--border); }
+
+    /* TOC */
+    #toc { padding:8px 8px 12px; overflow:auto; min-height:0; }
+    #toc a { display:block; padding:6px 8px; border-radius:10px; color:var(--text); text-decoration:none; border:1px solid transparent; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:13px; user-select:none; }
+    #toc a:hover { border-color:#2f4661; background:#0f1318; }
+    #toc a[data-level="1"] { font-weight:700; }
+    #toc a[data-level="2"] { padding-left:18px; color:#d6deea; }
+    #toc a[data-level="3"] { padding-left:28px; color:#c2ccda; }
+    #toc a[data-level="4"] { padding-left: 38px; color:#b2bfd1; }
+    #toc a[data-level="5"] { padding-left: 48px; color:#a6b4c8; }
+    #toc a[data-level="6"] { padding-left: 58px; color:#9aa7b5; }
+    #toc a.active { border-color: var(--accent); background:#0f1318; }
+    #toc a.dragging { opacity:.5; }
+    #toc a.drop-target { outline:2px dashed var(--accent); }
+    .toc-empty { color:var(--muted); padding:10px 12px; font-size:13px; }
+
+    /* Work (single scrollbar: textarea/preview only) */
+    #work .content {
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;   /* parent doesn't scroll */
+      display: flex;      /* pass height to children */
+    }
+
+    textarea {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      border:0; outline:none; resize:none;
+      padding:12px 14px;
+      background:transparent; color:var(--text);
+      font-size:14px; line-height:1.65;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Noto Sans Mono", monospace;
+    }
+
+    .hidden { display:none !important; }
+    .hint { padding:10px 12px; border-top:1px solid var(--border); color:var(--muted); font-size:12px; }
+
+    /* Preview (simple GitHub-ish) */
+    .preview { flex:1; min-height:0; overflow:auto; padding:12px 14px; line-height:1.75; padding-bottom: 50%; }
+    .preview h1 { font-size:24px; margin:10px 0 8px; }
+    .preview h2 { font-size:20px; margin:10px 0 6px; }
+    .preview h3 { font-size:17px; margin:10px 0 6px; }
+    .preview p { margin: 8px 0; }
+    .preview a { color:var(--accent); }
+    .preview code { background:#0f1318; border:1px solid var(--border); padding:1px 6px; border-radius:8px; }
+    .preview pre { background:#0f1318; border:1px solid var(--border); padding:12px; border-radius:14px; overflow:auto; }
+    .preview pre>code { padding: 0; border: 0;}
+    .preview blockquote { margin:10px 0; padding:8px 12px; border-left:3px solid var(--accent); background:#0f1318; border-radius:12px; color:#cbd6e5; }
+    .preview hr { border:0; border-top:1px solid var(--border); margin:14px 0; }
+    .preview ul, .preview ol { padding-left: 1.3em; margin: 8px 0; }
+    .preview li { margin: 4px 0; }
+    .task { display:flex; align-items:flex-start; gap:8px; }
+    .task input { margin-top: 4px; }
+
+    .preview table { border-collapse: collapse; width: 100%; margin: 10px 0; }
+    .preview th, .preview td { border:1px solid var(--border); padding:8px; vertical-align:top; }
+    .preview th { background:#0f1318; text-align:left; }
+
+    @media (max-width: 900px) { main { grid-template-columns: 1fr; height:auto; } .pane { height: 44vh; } }
+
+  /* Context menu */
+.ctx {
+  position: fixed;
+  z-index: 9999;
+  min-width: 160px;
+  background: #0f1318;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 6px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.45);
+}
+.ctx button {
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 13px;
+}
+.ctx button:hover { background: #12161b; border-color:#2f4661; }
+.ctx .sep { height: 1px; background: var(--border); margin: 6px 4px; }
+.ctx .danger { color: #ffb4b4; }
+
+/* TOC: caret + collapsed */
+#toc a { display:flex; align-items:center; gap:8px; }
+#toc a .caret {
+  width: 18px;
+  height: 18px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  color: var(--muted);
+  flex: 0 0 auto;
+  cursor: pointer;
+}
+#toc a .caret:hover { background:#0f1318; border-color:#2f4661; color: var(--text); }
+#toc a .label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#toc a.is-collapsed .caret { transform: rotate(-90deg); } /* ▶風 */
+
+/* inline rename */
+#toc .label[contenteditable="true"] {
+  outline: 2px solid var(--accent);
+  background: #0f1318;
+  border-radius: 8px;
+  padding: 2px 6px;
+}
+#toc .label[contenteditable="true"]:empty::before {
+  content: "（名前を入力）";
+  color: var(--muted);
+}
+
+.preview .editbox {
+  width: 100%;
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--accent);
+  background: #0f1318;
+  color: var(--text);
+  font: inherit;
+}
+.preview .editing { opacity: .7; }
+.preview textarea.editarea {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--accent);
+  background: #0f1318;
+  color: var(--text);
+  font: inherit;
+  line-height: 1.6;
+  resize: vertical;
+}
+.preview input.editbox {
+  width: 100%;
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--accent);
+  background: #0f1318;
+  color: var(--text);
+  font: inherit;
+}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="title">Single-file Markdown Editor (GFM-ish + TOC DnD)</div>
+    <div class="spacer"></div>
+    <button id="btnEditor" class="primary" type="button">エディタ</button>
+    <button id="btnPreview" type="button">プレビュー</button>
+    <button id="btnSample" type="button">サンプル</button>
+    <button id="btnClear" type="button">クリア</button>
+  </header>
+
+  <main>
+    <aside class="pane">
+      <div class="pane-title">見出しメニュー（ドラッグで並べ替え）</div>
+      <nav id="toc"></nav>
+      <div class="hint">エディタ時はエディタに、プレビュー時はプレビューにスクロールします</div>
+    </aside>
+
+    <section id="work" class="pane">
+      <div class="pane-title" id="workTitle">エディタ</div>
+      <div class="content">
+        <textarea id="md" spellcheck="false"></textarea>
+        <div id="preview" class="preview hidden"></div>
+      </div>
+      <div class="hint">Ctrl/⌘ + S: ローカル保存（localStorage）</div>
+    </section>
+  </main>
+
+<div id="ctxMenu" class="ctx hidden" role="menu" aria-hidden="true">
+  <button type="button" data-act="rename">名前変更…</button>
+  <button type="button" data-act="toggleCollapse">折りたたみ / 展開</button>
+  <div class="sep"></div>
+
+  <button type="button" data-act="up">上へ移動</button>
+  <button type="button" data-act="down">下へ移動</button>
+  <div class="sep"></div>
+
+  <button type="button" data-act="dup">複製</button>
+  <button type="button" data-act="del" class="danger">削除</button>
+</div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const md = $("md");
+    const previewEl = $("preview");
+    const tocEl = $("toc");
+
+    const btnEditor = $("btnEditor");
+    const btnPreview = $("btnPreview");
+    const workTitle = $("workTitle");
+
+    let currentMode = "editor"; // "editor" | "preview"
+    let headings = [];          // [{level,text,id,lineIndex,charIndex}]
+    let activeHeadingId = null;
+    let dragFromId = null;
+    let ctxTargetId = null;
+let syncingScroll = false;
+    const ctxMenu = $("ctxMenu");
+    // TOC折りたたみ状態（id単位）
+    const collapsedIds = new Set();
+
+    let suppressEditorActiveUntil = 0;
+
+    // ===== Undo / Redo =====
+const UNDO_MAX = 200;
+const undoStack = [];
+const redoStack = [];
+
+let typingSession = false;
+let typingTimer = null;
+let lastStableState = null;
+
+function captureState() {
+  return {
+    text: md.value ?? "",
+    selStart: md.selectionStart ?? 0,
+    selEnd: md.selectionEnd ?? 0,
+    mdScrollTop: md.scrollTop ?? 0,
+    previewScrollTop: previewEl.scrollTop ?? 0,
+    mode: currentMode
+  };
+}
+
+function restoreState(st) {
+  if (!st) return;
+  md.value = st.text;
+  persist();
+  renderAll();
+
+  // モードは基本維持（必要なら復元）
+  // setMode(st.mode);
+
+  requestAnimationFrame(() => {
+    md.setSelectionRange(st.selStart, st.selEnd);
+    md.scrollTop = st.mdScrollTop;
+    previewEl.scrollTop = st.previewScrollTop;
+
+    if (currentMode === "editor") {
+      updateActiveFromCaret?.();
+      renderTocActive?.(false);
+    } else {
+      updateActiveFromPreview?.();
+      renderTocActive?.(false);
+    }
+  });
+}
+
+function pushUndo(state) {
+  if (!state) return;
+  // 同一テキスト連続は詰まない（軽量化）
+  const last = undoStack[undoStack.length - 1];
+  if (last && last.text === state.text) return;
+
+  undoStack.push(state);
+  if (undoStack.length > UNDO_MAX) undoStack.shift();
+}
+
+function clearRedo() {
+  redoStack.length = 0;
+}
+
+function undo() {
+  const prev = undoStack.pop();
+  if (!prev) return;
+  redoStack.push(captureState());
+  restoreState(prev);
+}
+
+function redo() {
+  const next = redoStack.pop();
+  if (!next) return;
+  undoStack.push(captureState());
+  restoreState(next);
+}
+
+// プログラム的変更の前に呼ぶ（DnD/右クリック操作/プレビュー編集確定など）
+function recordBeforeProgramChange() {
+  pushUndo(captureState());
+  clearRedo();
+  typingSession = false;
+  if (typingTimer) { clearTimeout(typingTimer); typingTimer = null; }
+  lastStableState = captureState();
+}
+
+
+    function caretLineIndex() {
+      const text = md.value ?? "";
+      const pos = md.selectionStart ?? 0;
+      let line = 0;
+      for (let i = 0; i < pos && i < text.length; i++) if (text[i] === "\n") line++;
+      return line;
+    }
+
+    function updateActiveFromCaret() {
+      if (!headings.length) { activeHeadingId = null; return; }
+      const line = caretLineIndex();
+      let active = headings[0];
+      for (const h of headings) {
+        if (h.lineIndex <= line) active = h;
+        else break;
+      }
+      activeHeadingId = active?.id ?? null;
+    }
+
+    const onCaretUpdate = rafThrottle(() => {
+      if (currentMode !== "editor") return;
+      updateActiveFromCaret();
+      renderTocActive(false);
+    });
+
+
+    // ---------- Safety: escape HTML (we generate all HTML ourselves) ----------
+    function escapeHtml(s) {
+      return s.replace(/[&<>"']/g, c => ({
+        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+      }[c]));
+    }
+
+    // ---------- Slug / unique ----------
+    function slugify(text) {
+      return text
+        .toLowerCase()
+        .trim()
+        .replace(/<\/?[^>]+(>|$)/g, "")
+        .replace(/[^\p{L}\p{N}\s-]/gu, "")
+        .replace(/\s+/g, "-")
+        .slice(0, 80) || "section";
+    }
+    function uniqueSlug(base, used) {
+      let s = base, i = 2;
+      while (used.has(s)) s = `${base}-${i++}`;
+      used.add(s);
+      return s;
+    }
+
+    // ---------- Inline parsing (GFM-ish subset) ----------
+    function parseInline(raw) {
+      let s = escapeHtml(raw);
+
+      // inline code
+      s = s.replace(/`([^`]+)`/g, (_, c) => `<code>${escapeHtml(c)}</code>`);
+
+      // links [text](url)
+      s = s.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, (_, t, url) => {
+        const safeT = escapeHtml(t);
+        const safeUrl = escapeHtml(url);
+        return `<a href="${safeUrl}" target="_blank" rel="noreferrer">${safeT}</a>`;
+      });
+
+      // autolink (very simple): https://...
+      s = s.replace(/(^|[\s(])((https?:\/\/)[^\s<]+)/g, (_, pre, url) => {
+        const safeUrl = escapeHtml(url);
+        return `${pre}<a href="${safeUrl}" target="_blank" rel="noreferrer">${safeUrl}</a>`;
+      });
+
+      // strikethrough ~~text~~
+      s = s.replace(/~~([^~]+)~~/g, "<del>$1</del>");
+
+      // bold **text**
+      s = s.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+
+      // italic *text* (avoid **)
+      s = s.replace(/(^|[^*])\*([^*]+)\*(?!\*)/g, "$1<em>$2</em>");
+
+      return s;
+    }
+
+    // ---------- Block parsing (GFM-ish subset) ----------
+    function mdToHtmlAndHeadings(markdown) {
+      const src = markdown.replace(/\r\n/g, "\n");
+      const lines = src.split("\n");
+
+      const used = new Set();
+      const foundHeadings = [];
+      let codeStartLine = null;
+      const out = [];
+      let i = 0;
+      let inCode = false;
+      let codeBuf = [];
+      let inUl = false;
+      let inOl = false;
+      let inBlockquote = false;
+
+      const closeLists = () => {
+        if (inUl) { out.push("</ul>"); inUl = false; }
+        if (inOl) { out.push("</ol>"); inOl = false; }
+      };
+      const closeBlockquote = () => {
+        if (inBlockquote) { out.push("</blockquote>"); inBlockquote = false; }
+      };
+
+      let charIndex = 0;
+
+      function isTableSepLine(line) {
+        const t = line.trim();
+        if (!t.includes("|")) return false;
+        const parts = t.replace(/^\|/, "").replace(/\|$/, "").split("|").map(x => x.trim());
+        return parts.length >= 2 && parts.every(p => /^:?-{3,}:?$/.test(p));
+      }
+
+      function splitTableRow(line) {
+        const t = line.trim().replace(/^\|/, "").replace(/\|$/, "");
+        return t.split("|").map(c => c.trim());
+      }
+
+      while (i < lines.length) {
+        const line = lines[i];
+
+        // fenced code
+        if (/^```/.test(line)) {
+          closeLists(); closeBlockquote();
+          if (!inCode) {
+            inCode = true;
+            codeBuf = [];
+            codeStartLine = i;
+          } else {
+            inCode = false;
+            const code = escapeHtml(codeBuf.join("\n"));
+            out.push(
+              `<pre data-edit="code" data-start="${codeStartLine}" data-end="${i}"><code>${code}</code></pre>`
+            );
+
+            codeStartLine = null;
+          }
+          i++;
+          charIndex += line.length + 1;
+          continue;
+        }
+        if (inCode) {
+          codeBuf.push(line);
+          i++;
+          charIndex += line.length + 1;
+          continue;
+        }
+
+        // hr
+        if (/^(\s*)(-{3,}|\*{3,}|_{3,})\s*$/.test(line)) {
+          closeLists(); closeBlockquote();
+          out.push("<hr>");
+          i++;
+          charIndex += line.length + 1;
+          continue;
+        }
+
+        // heading (#..###)
+        const hm = line.match(/^(#{1,6})\s+(.*)$/);
+        if (hm) {
+          closeLists(); closeBlockquote();
+          const level = hm[1].length;
+          const text = hm[2].trim();
+          const id = uniqueSlug(slugify(text), used);
+
+          foundHeadings.push({ level, text, id, lineIndex: i, charIndex });
+          // out.push(`<h${level} id="${id}">${parseInline(text)}</h${level}>`);
+          out.push(
+            `<h${level} id="${id}" data-edit="heading" data-line="${i}" data-level="${level}">
+              ${parseInline(text)}
+            </h${level}>`
+          );
+
+          i++;
+          charIndex += line.length + 1;
+          continue;
+        }
+
+        // blockquote >
+        const bq = line.match(/^>\s?(.*)$/);
+        if (bq) {
+          closeLists();
+          if (!inBlockquote) { out.push("<blockquote>"); inBlockquote = true; }
+          const content = bq[1] ?? "";
+          if (content.trim() === "") out.push("<p></p>");
+          else out.push(`<p data-edit="paragraph" data-start="${i}" data-end="${i}">${parseInline(content)}</p>`);
+          i++;
+          charIndex += line.length + 1;
+          continue;
+        } else {
+          closeBlockquote();
+        }
+
+        // table: header row + separator row
+        if (line.trim().includes("|") && i + 1 < lines.length && isTableSepLine(lines[i + 1])) {
+          closeLists(); closeBlockquote();
+          const header = splitTableRow(line);
+          const sep = splitTableRow(lines[i + 1]);
+          const aligns = sep.map(s => {
+            const left = s.startsWith(":");
+            const right = s.endsWith(":");
+            if (left && right) return "center";
+            if (right) return "right";
+            if (left) return "left";
+            return "left";
+          });
+
+          const rows = [];
+          let j = i + 2;
+          while (j < lines.length && lines[j].trim().includes("|") && lines[j].trim() !== "") {
+            rows.push(splitTableRow(lines[j]));
+            j++;
+          }
+
+          out.push("<table><thead><tr>");
+          header.forEach((h, idx) => {
+            out.push(
+              `<th data-edit="table-cell" data-line="${i}" data-col="${idx}" style="text-align:${aligns[idx] || "left"}">${parseInline(h)}</th>`
+            );
+          });
+          out.push("</tr></thead><tbody>");
+          rows.forEach((r, rIdx) => {
+            const rowLine = i + 2 + rIdx;
+            out.push("<tr>");
+            header.forEach((_, idx) => {
+              out.push(
+                `<td data-edit="table-cell" data-line="${rowLine}" data-col="${idx}" style="text-align:${aligns[idx] || "left"}">${parseInline(r[idx] ?? "")}</td>`
+              );
+            });
+            out.push("</tr>");
+          });
+          out.push("</tbody></table>");
+
+          for (let k = i; k < j; k++) charIndex += lines[k].length + 1;
+          i = j;
+          continue;
+        }
+
+        // lists
+        const ulm = line.match(/^\s*[-*]\s+(.*)$/);
+        const olm = line.match(/^\s*\d+\.\s+(.*)$/);
+
+        if (ulm) {
+          closeBlockquote();
+          if (inOl) { out.push("</ol>"); inOl = false; }
+          if (!inUl) { out.push("<ul>"); inUl = true; }
+
+          const item = ulm[1];
+          const tm = item.match(/^\[( |x|X)\]\s+(.*)$/);
+          if (tm) {
+            const checked = (tm[1].toLowerCase() === "x");
+            const text = tm[2] ?? "";
+out.push(
+  `<li data-edit="list" data-line="${i}"><label class="task"><input type="checkbox" ${checked ? "checked" : ""} disabled>` +
+  `<span>${parseInline(text)}</span></label></li>`
+);
+          } else {
+            
+out.push(`<li data-edit="list" data-line="${i}">${parseInline(item)}</li>`);
+          }
+
+          i++;
+          charIndex += line.length + 1;
+          continue;
+        }
+
+        if (olm) {
+          closeBlockquote();
+          if (inUl) { out.push("</ul>"); inUl = false; }
+          if (!inOl) { out.push("<ol>"); inOl = true; }
+out.push(`<li data-edit="list" data-line="${i}">${parseInline(olm[1])}</li>`);
+          i++;
+          charIndex += line.length + 1;
+          continue;
+        }
+
+        if (inUl || inOl) {
+          if (line.trim() === "") {
+            closeLists();
+            i++;
+            charIndex += line.length + 1;
+            continue;
+          } else {
+            closeLists();
+          }
+        }
+
+        // blank line
+        if (line.trim() === "") {
+          closeBlockquote();
+          i++;
+          charIndex += line.length + 1;
+          continue;
+        }
+
+        // paragraph with <br>
+        closeBlockquote();
+        const paraLines = [line];
+        let startI = i;
+        i++;
+        while (i < lines.length) {
+          const l = lines[i];
+          if (l.trim() === "") break;
+          if (/^```/.test(l)) break;
+          if (/^(#{1,6})\s+/.test(l)) break;
+          if (/^>\s?/.test(l)) break;
+          if (/^(\s*)(-{3,}|\*{3,}|_{3,})\s*$/.test(l)) break;
+          if (/^\s*[-*]\s+/.test(l)) break;
+          if (/^\s*\d+\.\s+/.test(l)) break;
+          if (l.trim().includes("|") && i + 1 < lines.length && isTableSepLine(lines[i + 1])) break;
+
+          paraLines.push(l);
+          i++;
+        }
+
+const startLine = startI;
+const endLine = i - 1; // paraLines最後の行
+out.push(
+  `<p data-edit="paragraph" data-start="${startLine}" data-end="${endLine}">
+    ${paraLines.map(parseInline).join("<br>")}
+  </p>`
+);
+        for (let k = startI; k < i; k++) charIndex += lines[k].length + 1;
+      }
+
+      if (inCode) out.push(`<pre><code>${escapeHtml(codeBuf.join("\n"))}</code></pre>`);
+      if (inUl) out.push("</ul>");
+      if (inOl) out.push("</ol>");
+      if (inBlockquote) out.push("</blockquote>");
+
+      return { html: out.join(""), headings: foundHeadings };
+    }
+
+    // ---------- UI mode ----------
+    function setMode(mode) {
+      currentMode = mode;
+      const isEditor = mode === "editor";
+
+      md.classList.toggle("hidden", !isEditor);
+      previewEl.classList.toggle("hidden", isEditor);
+
+      btnEditor.classList.toggle("primary", isEditor);
+      btnPreview.classList.toggle("primary", !isEditor);
+
+      workTitle.textContent = isEditor ? "エディタ" : "プレビュー";
+
+      requestAnimationFrame(() => {
+        if (currentMode === "editor") updateActiveFromCaret();
+        else updateActiveFromPreview();
+        renderTocActive();
+      });
+    }
+    btnEditor.addEventListener("click", () => setMode("editor"));
+    btnPreview.addEventListener("click", () => setMode("preview"));
+
+    // ---------- TOC Active ----------
+    function renderTocActive(ensureVisible = false) {
+      const links = tocEl.querySelectorAll("a[data-id]");
+      links.forEach(a => {
+        a.classList.toggle("active", a.getAttribute("data-id") === activeHeadingId)
+
+        // 右クリックでメニュー表示
+        a.addEventListener("contextmenu", (e) => {
+          e.preventDefault();
+          const id = a.getAttribute("data-id");
+          showCtxMenu(e.clientX, e.clientY, id);
+        });
+
+      });
+      if (ensureVisible && activeHeadingId) {
+        const active = tocEl.querySelector(`a[data-id="${CSS.escape(activeHeadingId)}"]`);
+        if (active) active.scrollIntoView({ block:"nearest" });
+      }
+    }
+
+    // ---------- Editor scroll to heading ----------
+    function getTextareaLineHeight(textarea) {
+      const cs = getComputedStyle(textarea);
+      const lh = parseFloat(cs.lineHeight);
+      if (!Number.isNaN(lh)) return lh;
+      const fs = parseFloat(cs.fontSize) || 14;
+      return fs * 1.6;
+    }
+
+    function scrollTextareaToHeading(h) {
+      md.focus();
+      md.setSelectionRange(h.charIndex, h.charIndex);
+
+      const lineHeight = getTextareaLineHeight(md);
+      const targetTop = h.lineIndex * lineHeight;
+      const pad = md.clientHeight * 0.2;
+      md.scrollTop = Math.max(0, targetTop - pad);
+
+      // クリック直後のscrollイベントでズレるのを抑える
+      suppressEditorActiveUntil = performance.now() + 250;
+
+      requestAnimationFrame(() => {
+        updateActiveFromCaret();      // scrollTopではなく caret で決める
+        renderTocActive(true);
+      });
+
+    }
+
+    // ---------- Active heading detection ----------
+    function updateActiveFromEditor() {
+      if (!headings.length) { activeHeadingId = null; return; }
+      const lineHeight = getTextareaLineHeight(md);
+      const topLine = Math.floor(md.scrollTop / lineHeight);
+
+      let active = headings[0];
+      for (const h of headings) {
+        if (h.lineIndex <= topLine) active = h;
+        else break;
+      }
+      activeHeadingId = active?.id ?? null;
+    }
+
+    function updateActiveFromPreview() {
+      if (!headings.length) { activeHeadingId = null; return; }
+
+      const containerTop = previewEl.getBoundingClientRect().top;
+      const candidates = [];
+
+      for (const h of headings) {
+        const el = document.getElementById(h.id);
+        if (!el) continue;
+        const r = el.getBoundingClientRect();
+        candidates.push({ id: h.id, dist: r.top - containerTop });
+      }
+
+      const passed = candidates.filter(x => x.dist <= 8);
+      if (passed.length) {
+        passed.sort((a,b) => b.dist - a.dist);
+        activeHeadingId = passed[0].id;
+      } else {
+        candidates.sort((a,b) => a.dist - b.dist);
+        activeHeadingId = candidates[0]?.id ?? null;
+      }
+    }
+
+    function rafThrottle(fn) {
+      let ticking = false;
+      return () => {
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(() => { ticking = false; fn(); });
+      };
+    }
+
+  md.addEventListener("scroll", rafThrottle(() => {
+    if (currentMode !== "editor") return;
+    if (syncingScroll) return;
+
+    updateActiveFromCaret();     // 既存：カーソル基準
+    renderTocActive(false);
+
+    if (!activeHeadingId) return;
+
+    syncingScroll = true;
+    scrollPreviewToHeading(activeHeadingId);
+    requestAnimationFrame(() => syncingScroll = false);
+  }));
+
+previewEl.addEventListener("scroll", rafThrottle(() => {
+  if (currentMode !== "preview") return;
+  if (syncingScroll) return;
+
+  updateActiveFromPreview();   // 既存
+  renderTocActive(false);
+
+  if (!activeHeadingId) return;
+
+  syncingScroll = true;
+  const h = headings.find(x => x.id === activeHeadingId);
+  if (h) scrollTextareaToHeading(h);
+  requestAnimationFrame(() => syncingScroll = false);
+}));
+
+
+    // ---------- DnD: move section blocks ----------
+    function findHeadingIndexById(id) {
+      return headings.findIndex(h => h.id === id);
+    }
+
+function applyText(nextText) {
+  recordBeforeProgramChange();   // ★追加
+  md.value = nextText;
+  persist();
+  renderAll();
+}
+
+function toggleCollapse(id) {
+  if (!id) return;
+  if (collapsedIds.has(id)) collapsedIds.delete(id);
+  else collapsedIds.add(id);
+  renderToc();           // TOCの見た目だけ更新
+  renderTocActive(true); // アクティブが見えるように
+}
+
+function startInlineRename(id, anchorEl) {
+  const idx = findHeadingIndexById(id);
+  if (idx < 0) return;
+
+  // すでに編集中なら何もしない
+  if (tocEl.querySelector('.label[contenteditable="true"]')) return;
+
+  const label = anchorEl.querySelector(".label");
+  if (!label) return;
+
+  const h = headings[idx];
+  const oldText = h.text;
+  const oldLineIndex = h.lineIndex;
+  const oldLevel = h.level;
+
+  label.setAttribute("contenteditable", "true");
+  label.dataset.old = oldText;
+  label.focus();
+
+  // 全選択
+  document.getSelection()?.removeAllRanges();
+  const range = document.createRange();
+  range.selectNodeContents(label);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+
+  function finish(commit) {
+    label.removeEventListener("keydown", onKeyDown);
+    label.removeEventListener("blur", onBlur);
+
+    label.removeAttribute("contenteditable");
+
+    const newText = (label.textContent ?? "").trim();
+    const revert = () => { label.textContent = oldText; };
+
+    if (!commit) { revert(); return; }
+    if (!newText) { revert(); return; }
+    if (newText === oldText) { return; }
+
+    // Markdown本文の該当見出し行を書き換え
+    const lines = (md.value ?? "").replace(/\r\n/g, "\n").split("\n");
+    const line = lines[oldLineIndex] ?? "";
+    const m = line.match(/^(#{1,6})\s+(.*)$/);
+    if (!m) { revert(); return; }
+
+    lines[oldLineIndex] = `${m[1]} ${newText}`;
+    applyText(lines.join("\n"));
+
+    // headings 再生成後、同じ行番号・同じレベルの見出しを探して active を更新
+    const newIdx = headings.findIndex(x => x.lineIndex === oldLineIndex && x.level === oldLevel);
+    if (newIdx >= 0) {
+      activeHeadingId = headings[newIdx].id;
+      renderTocActive(true);
+      if (currentMode === "editor") scrollTextareaToHeading(headings[newIdx]);
+    }
+  }
+
+  function onKeyDown(e) {
+    if (e.key === "Enter") { e.preventDefault(); finish(true); }
+    if (e.key === "Escape") { e.preventDefault(); finish(false); }
+    // クリック等でTOCジャンプが走らないように
+    e.stopPropagation();
+  }
+  function onBlur() { finish(true); }
+
+  label.addEventListener("keydown", onKeyDown);
+  label.addEventListener("blur", onBlur);
+}
+
+
+function deleteSection(id) {
+  const idx = findHeadingIndexById(id);
+  if (idx < 0) return;
+
+  const lines = (md.value ?? "").replace(/\r\n/g, "\n").split("\n");
+  const r = getSectionRangeLines(lines, idx);
+
+  const nextLines = lines.slice(0, r.start).concat(lines.slice(r.end));
+  applyText(nextLines.join("\n"));
+}
+
+function duplicateSection(id) {
+  const idx = findHeadingIndexById(id);
+  if (idx < 0) return;
+
+  const lines = (md.value ?? "").replace(/\r\n/g, "\n").split("\n");
+  const r = getSectionRangeLines(lines, idx);
+  const block = lines.slice(r.start, r.end);
+
+  // 「元のセクションの直後」に挿入
+  const nextLines = lines.slice(0, r.end).concat(block, lines.slice(r.end));
+  applyText(nextLines.join("\n"));
+
+  // 目につくようにTOCを維持（同名が並ぶのでアクティブはそのままでもOK）
+  activeHeadingId = id;
+  renderTocActive(true);
+}
+
+  /**
+  * up/down は「同じ見出しレベル内」で入れ替えます（構造が壊れにくい）
+  * - up: 直前の同レベル見出しの “直前” に移動
+  * - down: 直後の同レベル見出しの “直後” に移動
+  */
+  function moveSectionUp(id) {
+    const fromIdx = findHeadingIndexById(id);
+    if (fromIdx <= 0) return;
+
+    const level = headings[fromIdx].level;
+    let prevIdx = -1;
+    for (let i = fromIdx - 1; i >= 0; i--) {
+      if (headings[i].level === level) { prevIdx = i; break; }
+    }
+    if (prevIdx < 0) return;
+
+    moveSectionBefore(id, headings[prevIdx].id);
+  }
+
+  function moveSectionDown(id) {
+    const fromIdx = findHeadingIndexById(id);
+    if (fromIdx < 0) return;
+
+    const level = headings[fromIdx].level;
+    let nextIdx = -1;
+    for (let i = fromIdx + 1; i < headings.length; i++) {
+      if (headings[i].level === level) { nextIdx = i; break; }
+    }
+    if (nextIdx < 0) return;
+
+    // 「次の同レベル見出し」のセクション末尾の後に移動したい
+    // → 実装は：from セクションを抜いて、挿入位置を「nextセクション末尾」にする
+    const text = md.value ?? "";
+    const lines = text.replace(/\r\n/g, "\n").split("\n");
+
+    const fromRange = getSectionRangeLines(lines, fromIdx);
+    const nextRange = getSectionRangeLines(lines, nextIdx);
+
+    // nextRange が fromRange の中だった場合は何もしない（通常ここには来ない）
+    if (nextRange.start >= fromRange.start && nextRange.start < fromRange.end) return;
+
+    const block = lines.slice(fromRange.start, fromRange.end);
+    const rest = lines.slice(0, fromRange.start).concat(lines.slice(fromRange.end));
+
+    // 取り除いた分、挿入位置がズレる補正
+    // 挿入したい場所：nextRange.end（元テキスト基準）
+    let insertAt = nextRange.end;
+    if (insertAt > fromRange.end) insertAt = insertAt - (fromRange.end - fromRange.start);
+
+    const nextLines = rest.slice(0, insertAt).concat(block, rest.slice(insertAt));
+    applyText(nextLines.join("\n"));
+
+    activeHeadingId = id;
+    renderTocActive(true);
+
+    if (currentMode === "editor") {
+      const newIdx = findHeadingIndexById(id);
+      if (newIdx >= 0) scrollTextareaToHeading(headings[newIdx]);
+    }
+  }
+
+
+    function getSectionRangeLines(lines, idx) {
+      const h = headings[idx];
+      const start = h.lineIndex;
+      const level = h.level;
+
+      let end = lines.length;
+      for (let j = idx + 1; j < headings.length; j++) {
+        if (headings[j].level <= level) {
+          end = headings[j].lineIndex;
+          break;
+        }
+      }
+      return { start, end }; // [start, end)
+    }
+
+    function moveSectionBefore(fromId, toId) {
+      if (!fromId || !toId || fromId === toId) return;
+
+      const fromIdx = findHeadingIndexById(fromId);
+      const toIdx = findHeadingIndexById(toId);
+      if (fromIdx < 0 || toIdx < 0) return;
+
+      const text = md.value ?? "";
+      const lines = text.replace(/\r\n/g, "\n").split("\n");
+
+      const fromRange = getSectionRangeLines(lines, fromIdx);
+      const toLine = headings[toIdx].lineIndex;
+
+      // disallow dropping into itself
+      if (toLine >= fromRange.start && toLine < fromRange.end) return;
+
+      const block = lines.slice(fromRange.start, fromRange.end);
+      const rest = lines.slice(0, fromRange.start).concat(lines.slice(fromRange.end));
+
+      let insertAt = toLine;
+      if (toLine > fromRange.end) insertAt = toLine - (fromRange.end - fromRange.start);
+
+      const nextLines = rest.slice(0, insertAt).concat(block, rest.slice(insertAt));
+
+      md.value = nextLines.join("\n");
+      persist();
+      renderAll();
+
+      activeHeadingId = fromId;
+      renderTocActive(true);
+
+      if (currentMode === "editor") {
+        const newIdx = findHeadingIndexById(fromId);
+        if (newIdx >= 0) scrollTextareaToHeading(headings[newIdx]);
+      }
+    }
+
+    // ---------- TOC rendering (click + DnD) ----------
+function renderToc() {
+  if (!headings.length) {
+    tocEl.innerHTML = `<div class="toc-empty">見出しがありません（#, ##, ### を追加してください）</div>`;
+    activeHeadingId = null;
+    return;
+  }
+
+  // 折りたたみ：表示すべきか判定する
+  const shouldHide = (() => {
+    let hideUntilLevel = null; // number | null
+    return (h) => {
+      if (hideUntilLevel !== null) {
+        if (h.level > hideUntilLevel) return true;      // 畳まれた配下
+        hideUntilLevel = null;                           // 配下終了
+      }
+      if (collapsedIds.has(h.id)) hideUntilLevel = h.level;
+      return false;
+    };
+  })();
+
+  // caret（折れる候補＝次の見出しが自分より深い）
+  const hasChildren = (i) => (i + 1 < headings.length && headings[i + 1].level > headings[i].level);
+
+  tocEl.innerHTML = headings.map((h, i) => {
+    const safeText = escapeHtml(h.text);
+    const hidden = shouldHide(h);
+    const collapsible = hasChildren(i);
+    const collapsed = collapsedIds.has(h.id);
+
+    return `
+      <a href="#${h.id}"
+         draggable="true"
+         data-id="${h.id}"
+         data-level="${h.level}"
+         title="${safeText}"
+         style="${hidden ? "display:none" : ""}"
+         class="${collapsed ? "is-collapsed" : ""}">
+        <span class="caret" data-caret="1" aria-hidden="true">${collapsible ? "▾" : ""}</span>
+        <span class="label">${safeText}</span>
+      </a>
+    `;
+  }).join("");
+
+  tocEl.querySelectorAll("a[data-id]").forEach(a => {
+    const id = a.getAttribute("data-id");
+
+    // caretクリックで折りたたみ（見出しジャンプはしない）
+    const caret = a.querySelector('[data-caret="1"]');
+    if (caret) {
+      caret.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        // 子がある時だけトグル
+        const idx = findHeadingIndexById(id);
+        if (idx >= 0 && idx + 1 < headings.length && headings[idx + 1].level > headings[idx].level) {
+          toggleCollapse(id);
+        }
+      });
+    }
+
+    // click（既存の動作）
+    a.addEventListener("click", (e) => {
+      // 編集中はジャンプしない
+      if (a.querySelector('.label[contenteditable="true"]')) return;
+
+      e.preventDefault();
+      const h = headings.find(x => x.id === id);
+      if (!h) return;
+
+      if (currentMode === "editor") {
+        scrollTextareaToHeading(h);
+      } else {
+        scrollPreviewToHeading(id);
+        activeHeadingId = id;
+        renderTocActive(true);
+      }
+    });
+
+    // ダブルクリックで名前変更
+    a.addEventListener("dblclick", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      startInlineRename(id, a);
+    });
+
+    // 右クリックでメニュー表示
+    a.addEventListener("contextmenu", (e) => {
+      e.preventDefault();
+      showCtxMenu(e.clientX, e.clientY, id);
+    });
+
+    // DnD（既存）
+    a.addEventListener("dragstart", (e) => {
+      dragFromId = id;
+      a.classList.add("dragging");
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", dragFromId);
+    });
+
+    a.addEventListener("dragend", () => {
+      dragFromId = null;
+      a.classList.remove("dragging");
+      tocEl.querySelectorAll(".drop-target").forEach(x => x.classList.remove("drop-target"));
+    });
+
+    a.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      a.classList.add("drop-target");
+    });
+
+    a.addEventListener("dragleave", () => {
+      a.classList.remove("drop-target");
+    });
+
+    a.addEventListener("drop", (e) => {
+      e.preventDefault();
+      a.classList.remove("drop-target");
+      const toId = id;
+      const fromId = dragFromId || e.dataTransfer.getData("text/plain");
+      if (!fromId || !toId) return;
+      moveSectionBefore(fromId, toId);
+    });
+  });
+
+  renderTocActive();
+}
+
+function scrollPreviewToHeading(id) {
+  const container = previewEl;               // #preview（overflow:auto）
+  const target = document.getElementById(id);
+  if (!container || !target) return;
+
+  // コンテナ内座標へ変換
+  const cRect = container.getBoundingClientRect();
+  const tRect = target.getBoundingClientRect();
+
+  // 現在のscrollTop + (targetのY - containerのY)
+  const y = container.scrollTop + (tRect.top - cRect.top);
+
+  // 下に余白を残す（コンテナ高さの15%）
+  const bottomPad = Math.floor(container.clientHeight * 0.15);
+
+  // 目標：見出しを常に一番上へ。さらに「最後付近」でも余白を確保できるように最大値を調整
+  const max = Math.max(0, container.scrollHeight - container.clientHeight + bottomPad);
+
+  container.scrollTo({
+    top: Math.min(y, max),
+    behavior: "smooth"
+  });
+}
+function autoGrow(t) {
+  t.style.height = "auto";
+  t.style.height = Math.min(t.scrollHeight, 500) + "px";
+}
+
+function editPreviewHeading(el){
+    // ---- 見出し編集（既存） ----
+    const h = el.closest("h1,h2,h3,h4,h5,h6");
+    if (h && previewEl.contains(h)) {
+      const line = Number(h.getAttribute("data-line"));
+      const oldText = (h.textContent ?? "").trim();
+      const level = Number(h.getAttribute("data-level")) || 1;
+      if (!Number.isFinite(line)) return;
+      if (h.querySelector("input.editbox")) return;
+
+      h.classList.add("editing");
+      const input = document.createElement("input");
+      input.className = "editbox";
+      input.value = oldText;
+      h.innerHTML = "";
+      h.appendChild(input);
+      input.focus(); input.select();
+
+      const commit = () => {
+        const nextText = input.value.trim();
+        if (!nextText || nextText === oldText) { renderAll(); return; }
+        const lines = (md.value ?? "").replace(/\r\n/g, "\n").split("\n");
+        const prefix = "#".repeat(Math.min(Math.max(level, 1), 6));
+        lines[line] = `${prefix} ${nextText}`;
+        applyText(lines.join("\n"));
+      };
+      const cancel = () => renderAll();
+
+      input.addEventListener("keydown", (ev) => {
+        if (ev.key === "Enter") { ev.preventDefault(); commit(); }
+        if (ev.key === "Escape") { ev.preventDefault(); cancel(); }
+        ev.stopPropagation();
+      });
+      input.addEventListener("blur", commit);
+      return;
+    }
+}
+
+function editPreviewListItem(li) {
+  const line = Number(li.getAttribute("data-line"));
+  if (!Number.isFinite(line)) return;
+
+  const lines = (md.value ?? "").replace(/\r\n/g, "\n").split("\n");
+  const srcLine = lines[line] ?? "";
+
+  const mTask = srcLine.match(/^(\s*[-*])\s+\[( |x|X)\]\s+(.*)$/);
+  const mUl = srcLine.match(/^(\s*[-*])\s+(.*)$/);
+  const mOl = srcLine.match(/^(\s*\d+\.)\s+(.*)$/);
+
+  let prefix = null;
+  let body = null;
+
+  if (mTask) {
+    prefix = `${mTask[1]} [${mTask[2]}] `;
+    body = mTask[3] ?? "";
+  } else if (mUl) {
+    prefix = `${mUl[1]} `;
+    body = mUl[2] ?? "";
+  } else if (mOl) {
+    prefix = `${mOl[1]} `;
+    body = mOl[2] ?? "";
+  } else {
+    return;
+  }
+
+  const input = document.createElement("input");
+  input.className = "editbox";
+  input.value = body;
+
+  li.innerHTML = "";
+  li.appendChild(input);
+  input.focus();
+  input.select();
+
+  const commit = () => {
+    const next = input.value.trim();
+    lines[line] = `${prefix}${next}`;
+    applyText(lines.join("\n"));
+  };
+
+  input.addEventListener("keydown", (ev) => {
+    if (ev.key === "Enter") {
+      ev.preventDefault();
+      commit();
+    }
+    if (ev.key === "Escape") {
+      ev.preventDefault();
+      renderAll();
+    }
+    ev.stopPropagation();
+  });
+
+  input.addEventListener("blur", commit);
+}
+
+function editPreviewParagraph(p) {
+  const start = Number(p.getAttribute("data-start"));
+  const end = Number(p.getAttribute("data-end"));
+  if (!Number.isFinite(start) || !Number.isFinite(end)) return;
+
+  const linesAll = (md.value ?? "").replace(/\r\n/g, "\n").split("\n");
+  const oldBlock = linesAll.slice(start, end + 1).join("\n");
+
+  const ta = document.createElement("textarea");
+  ta.className = "editarea";
+  ta.value = oldBlock;
+
+  p.innerHTML = "";
+  p.appendChild(ta);
+  ta.focus();
+
+  const commit = () => {
+    const nextText = ta.value.replace(/\r\n/g, "\n");
+    const base = (md.value ?? "").replace(/\r\n/g, "\n").split("\n");
+    base.splice(start, end - start + 1, ...nextText.split("\n"));
+    applyText(base.join("\n"));
+  };
+
+  ta.addEventListener("keydown", (ev) => {
+    if ((ev.ctrlKey || ev.metaKey) && ev.key === "Enter") {
+      ev.preventDefault();
+      commit();
+    }
+    if (ev.key === "Escape") {
+      ev.preventDefault();
+      renderAll();
+    }
+    ev.stopPropagation();
+  });
+
+  ta.addEventListener("blur", commit);
+}
+
+function editPreviewCodeBlock(pre) {
+  const start = Number(pre.getAttribute("data-start"));
+  const end = Number(pre.getAttribute("data-end"));
+  if (!Number.isFinite(start) || !Number.isFinite(end)) return;
+
+  const lines = (md.value ?? "").replace(/\r\n/g, "\n").split("\n");
+
+  // ``` の内側だけ編集対象
+  const oldCode = lines.slice(start + 1, end).join("\n");
+
+  const ta = document.createElement("textarea");
+  ta.className = "editarea";
+  ta.value = oldCode;
+
+  pre.innerHTML = "";
+  pre.appendChild(ta);
+  ta.focus();
+  ta.setSelectionRange(ta.value.length, ta.value.length);
+  autoGrow?.(ta);
+
+  ta.addEventListener("input", () => autoGrow?.(ta));
+
+  const commit = () => {
+    const nextCode = ta.value.replace(/\r\n/g, "\n");
+    const base = (md.value ?? "").replace(/\r\n/g, "\n").split("\n");
+
+    base.splice(start + 1, end - start - 1, ...nextCode.split("\n"));
+    applyText(base.join("\n"));
+  };
+
+  const cancel = () => renderAll();
+
+  ta.addEventListener("keydown", (ev) => {
+    if ((ev.ctrlKey || ev.metaKey) && ev.key === "Enter") {
+      ev.preventDefault();
+      commit();
+    }
+    if (ev.key === "Escape") {
+      ev.preventDefault();
+      cancel();
+    }
+    ev.stopPropagation();
+  });
+
+  ta.addEventListener("blur", commit);
+}
+
+function editPreviewTableCell(cell) {
+  const line = Number(cell.getAttribute("data-line"));
+  const col = Number(cell.getAttribute("data-col"));
+  if (!Number.isFinite(line) || !Number.isFinite(col)) return;
+
+  const lines = (md.value ?? "").replace(/\r\n/g, "\n").split("\n");
+  const srcLine = lines[line] ?? "";
+  if (!srcLine.includes("|")) return;
+
+  const hasLeftPipe = srcLine.trim().startsWith("|");
+  const hasRightPipe = srcLine.trim().endsWith("|");
+
+  const raw = srcLine.trim().replace(/^\|/, "").replace(/\|$/, "");
+  const cells = raw.split("|").map(s => s.trim());
+
+  if (col < 0 || col >= cells.length) return;
+
+  const oldText = cells[col];
+
+  const input = document.createElement("input");
+  input.className = "editbox";
+  input.value = oldText;
+
+  cell.innerHTML = "";
+  cell.appendChild(input);
+  input.focus();
+  input.select();
+
+  const commit = () => {
+    const next = input.value.trim();
+    cells[col] = next;
+
+    const body = cells.join("|");
+    lines[line] =
+      `${hasLeftPipe ? "|" : ""}${body}${hasRightPipe ? "|" : ""}`;
+
+    applyText(lines.join("\n"));
+  };
+
+  const cancel = () => renderAll();
+
+  input.addEventListener("keydown", (ev) => {
+    if (ev.key === "Enter") {
+      ev.preventDefault();
+      commit();
+    }
+    if (ev.key === "Escape") {
+      ev.preventDefault();
+      cancel();
+    }
+    ev.stopPropagation();
+  });
+
+  input.addEventListener("blur", commit);
+}
+
+function enablePreviewEditing() {
+  // li はクリックで編集開始
+  previewEl.addEventListener("dblclick", (e) => {
+    const target = e.target.closest("[data-edit]");
+    if (!target || !previewEl.contains(target)) return;
+    const type = target.getAttribute("data-edit");
+
+    if (type === "heading") {
+      editPreviewHeading(target);
+      return;
+    }
+
+    if (type === "paragraph") {
+      editPreviewParagraph(target);
+      return;
+    }
+
+    if (type === "list") {
+      editPreviewListItem(target);
+      return;
+    }
+
+    if (type === "code") {
+      editPreviewCodeBlock(target);
+      return;
+    }
+    
+    if (type === "table-cell") {
+      editPreviewTableCell(target);
+      return;
+    } 
+  });
+  
+}
+
+function startListItemEdit(li) {
+  const line = Number(li.getAttribute("data-line"));
+  if (!Number.isFinite(line)) return;
+
+  const lines = (md.value ?? "").replace(/\r\n/g, "\n").split("\n");
+  const srcLine = lines[line] ?? "";
+
+  const mTask = srcLine.match(/^(\s*[-*])\s+\[( |x|X)\]\s+(.*)$/);
+  const mUl   = srcLine.match(/^(\s*[-*])\s+(.*)$/);
+  const mOl   = srcLine.match(/^(\s*\d+\.)\s+(.*)$/);
+
+  let prefix = null;
+  let body = null;
+  if (mTask) { prefix = `${mTask[1]} [${mTask[2]}] `; body = mTask[3] ?? ""; }
+  else if (mUl) { prefix = `${mUl[1]} `; body = mUl[2] ?? ""; }
+  else if (mOl) { prefix = `${mOl[1]} `; body = mOl[2] ?? ""; }
+  else return;
+
+  if (li.querySelector("input.editbox")) return;
+
+  const input = document.createElement("input");
+  input.className = "editbox";
+  input.value = body;
+
+  li.innerHTML = "";
+  li.appendChild(input);
+  input.focus();
+  input.select();
+
+  const commit = () => {
+    const next = input.value.trim();
+    if (next === body) { renderAll(); return; }
+    lines[line] = `${prefix}${next}`;
+    applyText(lines.join("\n"));
+  };
+  const cancel = () => renderAll();
+
+  input.addEventListener("keydown", (ev) => {
+    if (ev.key === "Enter") { ev.preventDefault(); commit(); }
+    if (ev.key === "Escape") { ev.preventDefault(); cancel(); }
+    ev.stopPropagation();
+  });
+  input.addEventListener("blur", commit);
+}
+
+    // ----------------------------
+
+    function hideCtxMenu() {
+      ctxMenu.classList.add("hidden");
+      ctxMenu.setAttribute("aria-hidden", "true");
+      ctxTargetId = null;
+    }
+
+    function showCtxMenu(x, y, targetId) {
+      ctxTargetId = targetId;
+
+      // 画面外にはみ出さないように位置補正
+      ctxMenu.classList.remove("hidden");
+      ctxMenu.setAttribute("aria-hidden", "false");
+
+      const pad = 8;
+      const { innerWidth: W, innerHeight: H } = window;
+      const rect = ctxMenu.getBoundingClientRect();
+      const left = Math.min(x, W - rect.width - pad);
+      const top = Math.min(y, H - rect.height - pad);
+
+      ctxMenu.style.left = `${Math.max(pad, left)}px`;
+      ctxMenu.style.top = `${Math.max(pad, top)}px`;
+    }
+
+    // メニュークリック（委譲）
+    ctxMenu.addEventListener("click", (e) => {
+      const btn = e.target.closest("button[data-act]");
+      if (!btn || !ctxTargetId) return;
+
+      const act = btn.getAttribute("data-act");
+      const id = ctxTargetId;
+      if (act === "rename") {
+        // 対象TOC要素を探してインライン編集開始
+        const anchorEl = tocEl.querySelector(`a[data-id="${CSS.escape(id)}"]`);
+        if (anchorEl) startInlineRename(id, anchorEl);
+      }
+      if (act === "toggleCollapse") toggleCollapse(id);
+      if (act === "up") moveSectionUp(id);
+      if (act === "down") moveSectionDown(id);
+      if (act === "dup") duplicateSection(id);
+      if (act === "del") {
+        if (confirm("このセクションを削除しますか？（配下の内容も含みます）")) {
+          deleteSection(id);
+        }
+      }
+      hideCtxMenu();
+    });
+
+    // 外側クリック/ESCで閉じる
+    document.addEventListener("mousedown", (e) => {
+      if (!ctxMenu.classList.contains("hidden") && !ctxMenu.contains(e.target)) hideCtxMenu();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") hideCtxMenu();
+    });
+    // スクロールでも閉じる（邪魔になりやすいので）
+    md.addEventListener("scroll", hideCtxMenu);
+    previewEl.addEventListener("scroll", hideCtxMenu);
+    tocEl.addEventListener("scroll", hideCtxMenu);
+    window.addEventListener("resize", hideCtxMenu);
+
+
+    // ---------- Render ----------
+    function renderAll() {
+      const value = md.value ?? "";
+      const parsed = mdToHtmlAndHeadings(value);
+
+      previewEl.innerHTML = parsed.html;
+      headings = parsed.headings;
+
+      renderToc();
+
+      if (currentMode === "editor") updateActiveFromEditor();
+      else updateActiveFromPreview();
+      renderTocActive();
+    }
+
+    function persist() {
+      localStorage.setItem("gfm_singlefile_value", md.value ?? "");
+    }
+
+md.addEventListener("input", () => {
+  // タイピング開始時点のスナップショットを1回だけ積む（連続入力はまとめてUndo）
+  if (!typingSession) {
+    if (!lastStableState) lastStableState = captureState();
+    pushUndo(lastStableState);
+    clearRedo();
+    typingSession = true;
+  }
+
+  persist();
+  renderAll();
+  onCaretUpdate?.();
+
+  if (typingTimer) clearTimeout(typingTimer);
+  typingTimer = setTimeout(() => {
+    typingSession = false;
+    lastStableState = captureState();
+  }, 450);
+});
+
+md.addEventListener("click", onCaretUpdate);
+md.addEventListener("keyup", onCaretUpdate);
+md.addEventListener("select", onCaretUpdate);
+window.addEventListener("keydown", (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+    e.preventDefault();
+    persist();
+  }
+
+  const mod = e.ctrlKey || e.metaKey;
+
+  if (mod && !e.shiftKey && e.key.toLowerCase() === "z") {
+    e.preventDefault();
+    undo();
+    return;
+  }
+  if ((mod && e.shiftKey && e.key.toLowerCase() === "z") || (mod && e.key.toLowerCase() === "y")) {
+    e.preventDefault();
+    redo();
+    return;
+  }
+});
+
+    $("btnClear").addEventListener("click", () => {
+      md.value = "";
+      persist();
+      renderAll();
+      md.focus();
+    });
+
+   const DEFAULT_TEXT = `# Single-file Markdown Editor
+
+HTML 1ファイルで動作する、**ライブラリ非依存のMarkdownエディタ**です。
+左に見出しメニュー（TOC）、右にエディタ／プレビューを切り替えて表示できます。
+
+|ABC|DEF|GHI|
+|---|---|---|
+|123|456|789|
+
+> Ground
+> Sea
+> Air
+
+`+"```"+`
+Hello, World!
+こんにちは世界
+`+"```"+`
+---
+
+## 主な特徴
+
+### Markdown対応
+
+* 見出し：\`h1〜h6\`
+* 強調：\`**bold**\` / \`*italic*\` / \`~~strike~~\`
+* コード：インライン / フェンス
+* リスト：箇条書き / 番号付き / タスクリスト
+* 引用、水平線、テーブル
+* リンク、URL自動リンク
+
+※ GFM互換を意識した **実用サブセット**
+
+---
+
+### エディタ / プレビュー
+
+* ボタンで切り替え表示
+* 右ペインは **スクロールバー1本**
+* ダークモード対応スクロールバー
+
+---
+
+### 見出しメニュー（TOC）
+
+* h1〜h6 対応・階層表示
+* クリックでジャンプ
+
+  * エディタ表示時：エディタ内へ
+  * プレビュー表示時：プレビュー内へ
+* **アクティブ見出しはカーソル位置基準**
+* スクロールに追従してハイライト
+
+---
+
+### TOC操作（右クリック）
+
+* 名前変更（その場でインライン編集）
+* 折りたたみ / 展開（TOC表示のみ）
+* 上へ / 下へ移動（同レベル内）
+* 複製（セクション単位）
+* 削除（配下含む）
+
+---
+
+### ドラッグ＆ドロップ
+
+* TOC上で見出しを並べ替え
+* セクション単位で移動（配下も一緒）
+
+---
+
+## 操作補足
+
+* Enter：インライン名前変更確定
+* Esc：名前変更キャンセル
+* Ctrl / Cmd + S：ローカル保存（localStorage）
+
+---
+
+## 制限
+
+* 完全なGFM仕様ではありません
+* 見出しIDはテキスト由来（名前変更でIDが変わります）
+
+---
+
+## 想定用途
+
+* 設計書・仕様書
+* 技術メモ
+* 長文Markdownの構造編集
+
+---
+
+
+## License
+
+MIT License
+(c) 2026 tm124k4
+
+`
+    $("btnSample").addEventListener("click", () => {
+      md.value = DEFAULT_TEXT;
+      persist();
+      renderAll();
+      md.focus();
+    });
+
+    // ---------- Init ----------
+    md.value = localStorage.getItem("gfm_singlefile_value") || DEFAULT_TEXT;
+    renderAll();
+    setMode("preview");enablePreviewEditing();lastStableState = captureState();
+  </script>
+</body>
+</html>

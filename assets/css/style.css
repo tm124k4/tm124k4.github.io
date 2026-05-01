@@ -1,4 +1,6 @@
 @import url("./foundation/re.css");
+@import url("./foundation/base.css");
+
 @import url("./layout/index.css");
 
 @import url("./object/project/_footer.css");
